@@ -170,4 +170,6 @@ Không có bước 2 → không được tính Done, kể cả đã xong bản v
 - `04_person_D_design.md` — task chi tiết của D
 - `05_timeline_milestones.md` — timeline chi tiết theo ngày
 - `06_conventions_shared.md` — quy ước chung sâu hơn
+- `docs/handoff_A_D_after_BC_v12.md` — **A & D đọc trước khi làm**: tinh thần + chỗ phải khớp sau khi B/C vá v1.2
+- `docs/change_log.md` — lịch sử thay đổi đã chốt / cần xác nhận
 
