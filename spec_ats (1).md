@@ -1,7 +1,7 @@
 # Đặc tả Bài tập lớn — Phân tích & Thiết kế Hệ thống
 ## Hệ thống quản lý quy trình tuyển dụng (ATS mini) cho công ty IT
 
-**Phiên bản:** 1.0
+**Phiên bản:** 1.1 (đã vá qua audit Chương 3 — xem `docs/change_log.md`)
 **Domain:** Human Resources — Recruitment / Talent Acquisition
 **Loại hệ thống:** Web application, multi-tenant nội bộ một doanh nghiệp
 
@@ -104,7 +104,7 @@ Xây dựng hệ thống quản lý tuyển dụng tập trung, giúp:
 **Quan hệ đáng lưu ý:**
 - `Xếp lịch phỏng vấn` **<<include>>** `Kiểm tra xung đột lịch`.
 - `Ghi feedback` **<<include>>** `Chấm scorecard`.
-- `Duyệt offer` **<<extend>>** `Đàm phán lương` (chỉ khi ứng viên counter-offer).
+- `Duyệt offer` **<<extend>>** `Đàm phán lương` (UC-06, chỉ khi ứng viên counter-offer).
 - `Sàng lọc CV` **<<extend>>** `Gợi ý match CV–JD` (stretch).
 
 ---
@@ -136,7 +136,7 @@ Xây dựng hệ thống quản lý tuyển dụng tập trung, giúp:
 **Luồng thay thế (Alternative flows):**
 - **A5.1 — Xung đột lịch:** Ở bước 5, nếu có xung đột, hệ thống hiển thị interviewer bị trùng và gợi ý 3 khung giờ trống khác. Recruiter chọn lại → về bước 5.
 - **A5.2 — Không có interviewer rảnh:** Recruiter có thể ép chọn khung giờ (override) với lý do bắt buộc; hệ thống ghi audit log.
-- **A6.1 — Candidate không xác nhận trong SLA:** System (actor phụ) gửi nhắc; sau 48h chưa xác nhận, chuyển ứng viên sang trạng thái NEED_RESCHEDULE.
+- **A6.1 — Candidate không xác nhận trong SLA:** System (actor phụ) gửi nhắc trước hạn; quá **24h** chưa xác nhận (đúng BR-05), chuyển ứng viên sang trạng thái NEED_RESCHEDULE. *(v1.1: trước đây ghi 48h, gây lệch với BR-05 — đã đồng bộ về 24h, xem `docs/change_log.md`.)*
 
 **Business rules áp dụng:** BR-03, BR-05, BR-07 (xem mục 6).
 
@@ -211,7 +211,7 @@ Xây dựng hệ thống quản lý tuyển dụng tập trung, giúp:
 
 **Alternative:**
 - **A4.1 — Request Change:** Trả về cho Recruiter chỉnh, quy trình duyệt bắt đầu lại từ cấp 1.
-- **A6.1 — Candidate counter-offer:** **<<extend>>** UC-05 Đàm phán lương.
+- **A6.1 — Candidate counter-offer:** **<<extend>>** UC-06 Đàm phán lương (v1.1: đổi số từ "UC-05" — UC-05 đã dùng cho "Xem báo cáo tuyển dụng", xem đặc tả rút gọn UC-06 ngay dưới UC-05).
 - **A6.2 — Candidate không phản hồi:** Sau deadline, offer expired tự động.
 
 ---
@@ -236,6 +236,27 @@ Xây dựng hệ thống quản lý tuyển dụng tập trung, giúp:
 
 ---
 
+### UC-06: Đàm phán lương (đặc tả rút gọn)
+
+| Mục | Nội dung |
+|---|---|
+| **ID** | UC-06 |
+| **Tên** | Đàm phán lương |
+| **Actor chính** | Candidate |
+| **Actor phụ** | Recruiter |
+| **Quan hệ** | `<<extend>>` của UC-04 (Duyệt offer), chỉ kích hoạt khi Candidate chọn "Counter-offer" ở bước phản hồi offer |
+| **Precondition** | Offer đang ở trạng thái `OFFER_SENT` (Application) / `SIGNED_BY_COMPANY` (Offer) |
+| **Postcondition** | Application chuyển `NEGOTIATING`; Recruiter tạo offer draft mới, quy trình duyệt (UC-04) chạy lại từ cấp 1 |
+
+**Luồng chính:**
+1. Candidate chọn "Counter-offer" trên Candidate Portal, nhập mức lương/điều kiện mong muốn.
+2. Hệ thống ghi nhận, chuyển Application sang `NEGOTIATING`, notify Recruiter.
+3. Recruiter xem đề nghị, tạo Offer draft mới (quay lại UC-04 bước 1).
+
+*(v1.1: use case này trước đây được tham chiếu nhầm là "UC-05" trong UC-04 A6.1, trùng số với UC-05 "Xem báo cáo tuyển dụng" — đã đổi thành UC-06 để nhất quán, xem `docs/change_log.md`.)*
+
+---
+
 ## 6. Business Rules
 
 | Mã | Nội dung |
@@ -252,6 +273,9 @@ Xây dựng hệ thống quản lý tuyển dụng tập trung, giúp:
 | BR-10 | Khi ứng viên nhận offer, tất cả pipeline khác của cùng ứng viên (JD khác) chuyển thành ON_HOLD, chờ xác nhận có onboard hay không. |
 | BR-11 | Ứng viên đã hire nhưng không onboard đúng ngày → auto chuyển sang GHOSTED, JD reopen. |
 | BR-12 | Mọi email gửi ra ngoài phải dùng template được HR Admin duyệt. |
+| BR-13 *(mới, v1.1)* | Một Application ở `ON_HOLD` quá 14 ngày làm việc mà pipeline JD khác chưa ngã ngũ (chưa `HIRED`/`GHOSTED`/`DECLINED`), hoặc JD hiện tại đã `CLOSED` trong lúc đang `ON_HOLD`, thì tự động chuyển `REJECTED` kèm lý do "Hold quá hạn / JD đóng". |
+
+*(BR-13 được B đề xuất bổ sung khi làm STATE-01 — Chương 3 — vì transition `ON_HOLD → REJECTED` chưa có rule gốc nào chống lưng. Cần A xác nhận số ngày "14 ngày" ở Sync S4, hiện là giả định hợp lý dựa trên BR-09 (deadline offer 7 ngày làm việc) nhân đôi để chừa thời gian xử lý.)*
 
 ---
 
@@ -446,4 +470,4 @@ Optional: SEQ-04 — Ứng viên nộp CV qua portal, hệ thống parse & auto-
 
 ---
 
-*Hết đặc tả v1.0.*
+*Hết đặc tả v1.1. Lịch sử thay đổi: xem `docs/change_log.md`.*

@@ -1,10 +1,10 @@
 # C_domain_model_v1 — Domain Model (Conceptual)
 
 **Người vẽ:** C (Data Architect)
-**Phiên bản:** v1
+**Phiên bản:** v1.2 (đồng bộ sau audit Chương 4 — xem `docs/change_log.md`)
 **Mức trừu tượng:** Conceptual — chỉ thể hiện khái niệm nghiệp vụ, association và multiplicity. KHÔNG có datatype, KHÔNG có method (đúng nguyên tắc domain model, xem `03_person_C_data.md` mục 3).
 
-Domain model gồm **17 class**, đáp ứng yêu cầu tối thiểu 15 entity trong đề (`spec_ats (1).md` mục 8), có đủ:
+Domain model gồm **18 class** (thêm `ApplicationStatusHistory` ở v1.2), vượt yêu cầu tối thiểu 15 entity trong đề (`spec_ats (1).md` mục 8), có đủ:
 - 1 quan hệ **đệ quy**: `Department` tự liên kết với chính nó (cây phòng ban cha–con).
 - 1 quan hệ **N–N**: `Interview` và `User` liên kết N–N thông qua `InterviewParticipant` (association class).
 
@@ -41,6 +41,9 @@ classDiagram
     }
     class Application {
         status
+    }
+    class ApplicationStatusHistory {
+        toStatus
     }
     class Interview {
         scheduledAt
@@ -84,6 +87,8 @@ classDiagram
     Candidate "1" --> "0..*" Attachment : uploads CV
     Application "1" --> "0..*" Interview : scheduled for
     Application "1" --> "0..1" Offer : results in
+    Application "1" --> "0..*" ApplicationStatusHistory : tracks
+    User "0..1" --> "0..*" ApplicationStatusHistory : triggers
     Interview "1" --> "0..*" InterviewParticipant : involves
     User "1" --> "0..*" InterviewParticipant : participates as
     Interview "1" --> "0..*" Feedback : receives
@@ -109,5 +114,6 @@ classDiagram
 
 ## Ghi chú phạm vi
 
-- Domain model **không** đưa `Role` thành class riêng — role được coi là thuộc tính khái niệm của `User` (quyết định tách thành subtype sẽ thể hiện ở Class Diagram, xem `C_class_diagram_v1.md`).
-- Domain model **không** đưa `HRAdmin`, `Recruiter`, `HiringManager`, `Interviewer` thành class riêng ở mức conceptual để tránh trùng lặp — các subtype này chỉ xuất hiện ở Class Diagram logical, nơi cần thể hiện hành vi (method) khác nhau theo vai trò.
+- Domain model **không** đưa `Role` thành class riêng — role được coi là thuộc tính khái niệm của `User` (giá trị gồm Recruiter, Hiring Manager, Interviewer, HR Admin, **Head of HR**, **Finance** — chi tiết subtype ở Class Diagram v1.2).
+- Domain model **không** đưa các subtype `HRAdmin`, `Recruiter`... thành class riêng ở mức conceptual để tránh trùng lặp — các subtype này chỉ xuất hiện ở Class Diagram logical, nơi cần thể hiện hành vi (method) khác nhau theo vai trò.
+- `ApplicationStatusHistory` **[v1.2]** là khái niệm nghiệp vụ "lịch sử chuyển trạng thái ứng tuyển", tách khỏi `AuditLog` (log kỹ thuật đa entity).

@@ -129,7 +129,7 @@ btl_pttkht_ats/
 
 | Loại | Lựa chọn A | Lựa chọn B | Ghi chú |
 |---|---|---|---|
-| Vẽ diagram | **draw.io** (miễn phí, dễ collab) | PlantUML (text-based, git-friendly) | Nên chọn 1, tránh mix |
+| Vẽ diagram | **draw.io** (miễn phí, dễ collab) | PlantUML (text-based, git-friendly) | Nên chọn 1, tránh mix. **Chốt lại sau audit Chương 3 (v1.1):** chấp nhận **Mermaid** tương đương PlantUML (cũng text-based, git-friendly, render sẵn trong Markdown) — B đã dùng Mermaid cho toàn bộ 7 diagram Chương 3. Lưu ý: Mermaid `flowchart` không có ký hiệu fork/join và swimlane chuẩn UML như PlantUML thật — nếu hội đồng yêu cầu đúng ký hiệu UML nghiêm ngặt, cân nhắc vẽ lại 2 activity diagram (ACT-01, ACT-02) bằng PlantUML trước khi in báo cáo cuối. |
 | Báo cáo | **Google Docs** (dễ review chéo) | LaTeX/Overleaf | Google Docs an toàn hơn cho nhóm không quen LaTeX |
 | Slide | Google Slides | PowerPoint | |
 | Task tracking | **Notion** hoặc Trello | GitHub Projects | Cần cho tuần 4-5 khi nhiều task nhỏ |

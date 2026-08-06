@@ -1,7 +1,7 @@
 -- =====================================================================
 -- ATS mini — Schema PostgreSQL
 -- Person C — Data Architect | Chương 4
--- Phiên bản: v1
+-- Phiên bản: v1.2 (audit Chương 4 — role BR-08 + status history; xem docs/change_log.md)
 -- Khớp với: diagrams/C_erd_v1.md, docs/data_dictionary_C.md
 --
 -- Cách chạy:
@@ -16,7 +16,10 @@ BEGIN;
 -- ---------------------------------------------------------------------
 
 CREATE TYPE user_role AS ENUM (
-    'RECRUITER', 'HIRING_MANAGER', 'INTERVIEWER', 'HR_ADMIN'
+    'RECRUITER', 'HIRING_MANAGER', 'INTERVIEWER', 'HR_ADMIN',
+    -- [v1.2] Khớp BR-08 / UC-04 / ACT-02 / SEQ-02: cấp duyệt 2 = Head of HR, cấp 3 = Finance.
+    -- Trước đây chỉ có HR_ADMIN — không đủ để mô hình hoá 2 actor duyệt offer riêng biệt.
+    'HEAD_OF_HR', 'FINANCE'
 );
 
 CREATE TYPE jd_status AS ENUM (
@@ -191,6 +194,22 @@ CREATE INDEX idx_applications_status ON applications (status);
 -- Hỗ trợ BR-04 (không cho apply lại cùng JD trong 6 tháng kể từ lần reject gần nhất) ở tầng service
 CREATE INDEX idx_applications_candidate_jd_applied ON applications (candidate_id, jd_id, applied_at);
 
+-- [v1.2] Lịch sử chuyển trạng thái Application — phục vụ time-in-stage / audit chặt hơn
+-- audit_logs (polymorphic). Mỗi lần Application.transitionTo() ghi 1 dòng.
+CREATE TABLE application_status_history (
+    id              BIGSERIAL PRIMARY KEY,
+    application_id  BIGINT NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+    from_status     application_status,          -- NULL khi tạo mới (NEW)
+    to_status       application_status NOT NULL,
+    actor_id        BIGINT REFERENCES users(id) ON DELETE SET NULL,  -- NULL = System/cron
+    changed_at      TIMESTAMP NOT NULL DEFAULT now(),
+    note            VARCHAR(255)
+);
+
+CREATE INDEX idx_ash_application_id ON application_status_history (application_id);
+CREATE INDEX idx_ash_changed_at ON application_status_history (changed_at);
+CREATE INDEX idx_ash_to_status ON application_status_history (to_status);
+
 -- ---------------------------------------------------------------------
 -- 5. INTERVIEW & FEEDBACK
 -- ---------------------------------------------------------------------
@@ -205,7 +224,11 @@ CREATE TABLE interviews (
     status              interview_status NOT NULL DEFAULT 'SCHEDULED',
     created_at          TIMESTAMP NOT NULL DEFAULT now(),
     updated_at          TIMESTAMP NOT NULL DEFAULT now(),
-    CONSTRAINT chk_interviews_duration_positive CHECK (duration_min > 0)
+    CONSTRAINT chk_interviews_duration_positive CHECK (duration_min > 0),
+    -- [v1.1] Đảm bảo reschedule = UPDATE lại cùng 1 dòng (đổi scheduled_at + status),
+    -- không tạo dòng interview mới cho cùng vòng — khớp giả định trong STATE-02
+    -- (diagrams/B_state_interview_v1.md) của B.
+    CONSTRAINT uq_interviews_application_round UNIQUE (application_id, round_order)
 );
 
 CREATE INDEX idx_interviews_application_id ON interviews (application_id);
@@ -266,11 +289,16 @@ CREATE TABLE offers (
     deadline                    DATE NOT NULL,
     status                      offer_status NOT NULL DEFAULT 'DRAFT',
     current_approval_level      INT NOT NULL DEFAULT 0,
+    -- [v1.1] Tăng lên mỗi khi quy trình duyệt bị Request Change và phải chạy lại
+    -- từ cấp 1 (UC-04 A4.1) — dùng cùng offer_approvals.attempt_no để phân biệt
+    -- các dòng approval của lần duyệt trước với lần duyệt hiện tại.
+    current_approval_attempt   INT NOT NULL DEFAULT 1,
     created_at                  TIMESTAMP NOT NULL DEFAULT now(),
     updated_at                  TIMESTAMP NOT NULL DEFAULT now(),
     CONSTRAINT uq_offers_application_id UNIQUE (application_id),
     CONSTRAINT chk_offers_salary_positive CHECK (salary > 0),
-    CONSTRAINT chk_offers_approval_level_nonneg CHECK (current_approval_level >= 0)
+    CONSTRAINT chk_offers_approval_level_nonneg CHECK (current_approval_level >= 0),
+    CONSTRAINT chk_offers_approval_attempt_positive CHECK (current_approval_attempt > 0)
 );
 
 CREATE INDEX idx_offers_application_id ON offers (application_id);
@@ -282,12 +310,18 @@ CREATE TABLE offer_approvals (
     offer_id        BIGINT NOT NULL REFERENCES offers(id) ON DELETE CASCADE,
     approver_id     BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     level           INT NOT NULL,
+    -- [v1.1] Trước đây UNIQUE(offer_id, level) chặn việc ghi dòng approval mới
+    -- cùng level khi quy trình duyệt lại từ cấp 1 (UC-04 A4.1, xem ACT-02/SEQ-02
+    -- của B) — thêm attempt_no để mỗi lần "duyệt lại từ đầu" là 1 attempt riêng,
+    -- giữ được lịch sử đầy đủ thay vì update chồng lên dòng cũ.
+    attempt_no      INT NOT NULL DEFAULT 1,
     decision        approval_decision NOT NULL DEFAULT 'PENDING',
     comment         TEXT,
     decided_at      TIMESTAMP,
     created_at      TIMESTAMP NOT NULL DEFAULT now(),
-    CONSTRAINT uq_offer_approval_level UNIQUE (offer_id, level),
-    CONSTRAINT chk_offer_approval_level_range CHECK (level BETWEEN 1 AND 3)
+    CONSTRAINT uq_offer_approval_level UNIQUE (offer_id, level, attempt_no),
+    CONSTRAINT chk_offer_approval_level_range CHECK (level BETWEEN 1 AND 3),
+    CONSTRAINT chk_offer_approval_attempt_positive CHECK (attempt_no > 0)
 );
 
 CREATE INDEX idx_offer_approvals_offer_id ON offer_approvals (offer_id);
@@ -351,3 +385,17 @@ COMMIT;
 --    liệu con phụ thuộc chặt (feedback_criteria, interview_participants,
 --    attachments...), SET NULL cho self-reference (departments.parent_id)
 --    và audit_logs.actor_id (giữ log dù user bị xoá).
+-- 4. [v1.1 — vá qua audit Chương 3 của B, xem docs/change_log.md]
+--    a. interviews.uq_interviews_application_round: khoá 1 interview/round
+--       cho mỗi application, để "reschedule" là UPDATE chứ không phải
+--       tạo dòng mới (khớp STATE-02 mới của B).
+--    b. offer_approvals.attempt_no + offers.current_approval_attempt:
+--       cho phép quy trình duyệt "chạy lại từ cấp 1" (UC-04 A4.1) ghi
+--       dòng approval mới mà không đụng UNIQUE(offer_id, level) cũ.
+--    Cả 2 thay đổi cần C xác nhận chính thức ở Sync S4 trước khi coi là Done.
+-- 5. [v1.2 — audit Chương 4]
+--    a. user_role thêm HEAD_OF_HR, FINANCE (khớp BR-08 / ACT-02 / SEQ-02).
+--    b. Bảng application_status_history cho time-in-stage + audit chuyển trạng thái.
+--    c. updated_at: chỉ bắt buộc trên bảng mutable; bảng append-only
+--       (audit_logs, notifications, application_status_history, feedback_criteria,
+--       interview_participants, offer_approvals) chỉ cần created_at / changed_at.

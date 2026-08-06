@@ -22,7 +22,7 @@ Quy trình thực hiện: liệt kê entity từ use case → vẽ Domain Model 
 
 ## 4.2. Domain Model
 
-Domain Model (Hình 4.1) mô hình hoá 17 khái niệm nghiệp vụ cốt lõi, vượt mức yêu cầu tối thiểu 15 entity. Ở tầng này, mọi association chỉ mang tên và bội số (multiplicity), không có kiểu dữ liệu, không có phương thức.
+Domain Model (Hình 4.1) mô hình hoá **18** khái niệm nghiệp vụ cốt lõi (v1.2 thêm `ApplicationStatusHistory`), vượt mức yêu cầu tối thiểu 15 entity. Ở tầng này, mọi association chỉ mang tên và bội số (multiplicity), không có kiểu dữ liệu, không có phương thức.
 
 **Hình 4.1 — Domain Model (nguồn: `diagrams/C_domain_model_v1.md`)**
 
@@ -36,6 +36,7 @@ classDiagram
     class Candidate { fullName email }
     class Attachment { fileName }
     class Application { status }
+    class ApplicationStatusHistory { toStatus }
     class Interview { scheduledAt status }
     class InterviewParticipant { role }
     class Feedback { verdict }
@@ -58,6 +59,8 @@ classDiagram
     Candidate "1" --> "0..*" Attachment : uploads CV
     Application "1" --> "0..*" Interview : scheduled for
     Application "1" --> "0..1" Offer : results in
+    Application "1" --> "0..*" ApplicationStatusHistory : tracks
+    User "0..1" --> "0..*" ApplicationStatusHistory : triggers
     Interview "1" --> "0..*" InterviewParticipant : involves
     User "1" --> "0..*" InterviewParticipant : participates as
     Interview "1" --> "0..*" Feedback : receives
@@ -73,7 +76,7 @@ Domain Model thoả 2 ràng buộc kỹ thuật bắt buộc:
 - **Quan hệ đệ quy:** `Department` tự liên kết với chính nó, thể hiện cây tổ chức nhiều cấp (VD: Engineering → Backend Team → Payment Squad).
 - **Quan hệ N–N:** `Interview` và `User` liên kết N–N thông qua association class `InterviewParticipant` — một buổi phỏng vấn có nhiều interviewer, một interviewer tham gia nhiều buổi phỏng vấn khác nhau.
 
-Không có class nào "cô lập" (không association nào); mọi entity đều xuất hiện trong ít nhất một use case ở Chương 2, thoả tiêu chí "Done" của Data Architect.
+Không có class nào "cô lập" (không association nào); mọi entity đều xuất hiện trong ít nhất một use case ở Chương 2 (hoặc hỗ trợ trực tiếp state machine Chương 3 với `ApplicationStatusHistory`), thoả tiêu chí "Done" của Data Architect.
 
 ---
 
@@ -81,7 +84,7 @@ Không có class nào "cô lập" (không association nào); mọi entity đều
 
 Class Diagram (Hình 4.2) phát triển từ Domain Model, bổ sung kiểu dữ liệu cho attribute, phương thức mang ý nghĩa nghiệp vụ, và 2 cấu trúc OOP nâng cao: inheritance và interface.
 
-**Hình 4.2 — Class Diagram (nguồn: `diagrams/C_class_diagram_v1.md`, trích các class chính; bản đầy đủ 17 class xem file nguồn)**
+**Hình 4.2 — Class Diagram (nguồn: `diagrams/C_class_diagram_v1.md`, trích các class chính; bản đầy đủ xem file nguồn)**
 
 ```mermaid
 classDiagram
@@ -110,6 +113,13 @@ classDiagram
         +manageUsers() void
         +approveEmailTemplate(tpl EmailTemplate) void
     }
+    class HeadOfHR {
+        +decideOfferLevel2(offer Offer) void
+        +viewReports() void
+    }
+    class Finance {
+        +decideOfferLevel3(offer Offer) void
+    }
     class Approvable {
         <<interface>>
         +approve(level Int) void
@@ -130,8 +140,10 @@ classDiagram
         +Date deadline
         +OfferStatus status
         +Int currentApprovalLevel
+        +Int currentApprovalAttempt
         +determineApprovalLevels() Int
         +isExpired() Boolean
+        +bumpApprovalAttempt() void
     }
     class Interview {
         +DateTime scheduledAt
@@ -161,12 +173,20 @@ classDiagram
         +submit() void
         +transitionTo(status ApplicationStatus) void
         +placeOnHold() void
+        +recordStatusChange(to ApplicationStatus, actor User) void
+    }
+    class ApplicationStatusHistory {
+        +ApplicationStatus fromStatus
+        +ApplicationStatus toStatus
+        +DateTime changedAt
     }
 
     User <|-- Recruiter
     User <|-- HiringManager
     User <|-- Interviewer
     User <|-- HRAdmin
+    User <|-- HeadOfHR
+    User <|-- Finance
     Approvable <|.. Offer
     Approvable <|.. JobDescription
     Interview "1" --> "0..*" InterviewParticipant
@@ -175,11 +195,12 @@ classDiagram
     Feedback "1" *-- "1..*" FeedbackCriterion : composition
     Application "1" --> "0..*" Interview
     Application "1" --> "0..1" Offer
+    Application "1" --> "0..*" ApplicationStatusHistory
 ```
 
-### 4.3.1. Inheritance — `User` và 4 vai trò
+### 4.3.1. Inheritance — `User` và 6 vai trò **[v1.2]**
 
-Bốn vai trò (`Recruiter`, `HiringManager`, `Interviewer`, `HRAdmin`) được mô hình hoá là subtype của `User` vì mỗi vai trò có **hành vi khác biệt rõ rệt** — đây là tiêu chí phân loại đúng tinh thần OOP (tách theo hành vi, không chỉ theo dữ liệu). Ở tầng vật lý, quyết định này **không** dẫn đến 4 bảng riêng; xem lý do ở mục 4.5.2.
+Sáu vai trò (`Recruiter`, `HiringManager`, `Interviewer`, `HRAdmin`, `HeadOfHR`, `Finance`) được mô hình hoá là subtype của `User` vì mỗi vai trò có **hành vi khác biệt rõ rệt**. Đặc biệt `HeadOfHR` / `Finance` khớp BR-08 và ACT-02/SEQ-02 của B (cấp duyệt 2 và 3). Ở tầng vật lý, quyết định này **không** dẫn đến 6 bảng riêng; xem lý do ở mục 4.6.3.
 
 ### 4.3.2. Interface — `Approvable`
 
@@ -200,8 +221,9 @@ Do quan hệ N–N giữa `Interview` và `User` cần lưu thêm thuộc tính 
 ERD (Hình 4.3) là bản chuyển đổi vật lý của Class Diagram, sát với schema PostgreSQL thật trong `sql/schema.sql`. Ba phép chuyển đổi quan trọng từ logical sang physical:
 
 1. Quan hệ N–N `Interview` ↔ `User` → bảng trung gian `interview_participants` với surrogate key và `UNIQUE(interview_id, interviewer_id)`.
-2. Inheritance `User` → 4 subtype → **single-table inheritance**: một bảng `users` duy nhất với cột `role` kiểu ENUM.
+2. Inheritance `User` → 6 subtype → **single-table inheritance**: một bảng `users` duy nhất với cột `role` kiểu ENUM (6 giá trị, gồm `HEAD_OF_HR` / `FINANCE` từ v1.2).
 3. Interface `Approvable` → không có bảng riêng (interface không tồn tại ở tầng lưu trữ); hành vi được đảm bảo qua ràng buộc ENUM `status` trên `job_descriptions` và `offers`.
+4. **[v1.1/v1.2]** `offers.current_approval_attempt` + `offer_approvals.attempt_no`; `UNIQUE(application_id, round_order)` trên `interviews`; bảng `application_status_history`.
 
 **Hình 4.3 — ERD tổng thể (nguồn đầy đủ: `diagrams/C_erd_v1.md`; DDL chạy được: `sql/schema.sql`)**
 
@@ -236,6 +258,11 @@ erDiagram
         application_status status
         int current_round
     }
+    APPLICATION_STATUS_HISTORY {
+        bigint id PK
+        bigint application_id FK
+        application_status to_status
+    }
     INTERVIEWS {
         bigint id PK
         bigint application_id FK
@@ -260,11 +287,13 @@ erDiagram
         bigint id PK
         bigint application_id FK
         offer_status status
+        int current_approval_attempt
     }
     OFFER_APPROVALS {
         bigint id PK
         bigint offer_id FK
         bigint approver_id FK
+        int attempt_no
     }
 
     DEPARTMENTS |o--o{ DEPARTMENTS : parent_of
@@ -276,6 +305,7 @@ erDiagram
     CANDIDATES ||--o{ APPLICATIONS : submits
     APPLICATIONS ||--o{ INTERVIEWS : has
     APPLICATIONS ||--o| OFFERS : results_in
+    APPLICATIONS ||--o{ APPLICATION_STATUS_HISTORY : tracks
     INTERVIEWS ||--o{ INTERVIEW_PARTICIPANTS : involves
     USERS ||--o{ INTERVIEW_PARTICIPANTS : participates_as
     INTERVIEWS ||--o{ FEEDBACKS : receives
@@ -285,7 +315,7 @@ erDiagram
     USERS ||--o{ OFFER_APPROVALS : approves
 ```
 
-*(Ghi chú: sơ đồ trên rút gọn thuộc tính để vừa trang; ERD đầy đủ 17 bảng với mọi cột đặt trong `diagrams/C_erd_v1.md`, chi tiết field-level đặt trong phụ lục — xem `docs/data_dictionary_C.md`.)*
+*(Ghi chú: sơ đồ trên rút gọn thuộc tính để vừa trang; ERD đầy đủ 18 bảng với mọi cột đặt trong `diagrams/C_erd_v1.md`, chi tiết field-level đặt trong phụ lục — xem `docs/data_dictionary_C.md`.)*
 
 ---
 
@@ -299,11 +329,14 @@ erDiagram
 | BR-02 | JD chỉ nhận CV khi ở trạng thái OPEN | `job_descriptions.status` ENUM `jd_status`; enforce ở service layer khi tạo `Application` |
 | BR-03 | Không trùng lịch cho cùng 1 interviewer | Không biểu diễn được bằng CHECK constraint (ràng buộc liên dòng, có yếu tố thời gian) — enforce bằng Redis lock ở service layer (xem SEQ-01, Chương 3) + `idx_interviews_scheduled_at`, `idx_ipart_interviewer_id` hỗ trợ query kiểm tra trước khi ghi |
 | BR-04 | Không apply lại cùng JD trong 6 tháng kể từ lần reject | Tương tự BR-03, enforce ở service layer; index `(candidate_id, jd_id, applied_at)` hỗ trợ truy vấn nhanh |
+| BR-05 **[v1.2]** | Candidate xác nhận lịch trong 24h | Service + cron; cập nhật `interviews.status` / `applications.status` → `NEED_RESCHEDULE`; ghi `application_status_history` |
 | BR-06 | Feedback phải submit trong 48h | `feedbacks.submitted_at`, `is_locked`; cron kiểm tra định kỳ (xem SEQ-03, Chương 3) |
 | BR-07 | Vòng ≥2 interviewer cần ≥50% kết luận HIRE trở lên | Suy ra được từ `feedbacks.verdict` theo `interview_id`; không cache sẵn (kết quả suy ra khi cần, tránh đồng bộ sai) |
-| BR-08 | Cấp duyệt offer theo mức lương so với band | `offer_approvals.level` CHECK 1–3; số cấp được tính động bởi `Offer.determineApprovalLevels()` ở tầng service |
+| BR-08 | Cấp duyệt offer theo mức lương so với band | `offer_approvals.level` CHECK 1–3; số cấp bởi `Offer.determineApprovalLevels()`. **[v1.1]** `attempt_no` / `current_approval_attempt`. **[v1.2]** `user_role` gồm `HEAD_OF_HR`, `FINANCE` cho cấp 2/3 |
 | BR-09 | Offer có hạn phản hồi tối đa 7 ngày làm việc | `offers.deadline` NOT NULL, có index để cron quét offer gần hết hạn |
-| BR-10, BR-11 | Chuyển trạng thái pipeline khác khi nhận offer / ghosted | Thể hiện qua các giá trị ENUM `ON_HOLD`, `GHOSTED` trong `application_status` |
+| BR-10, BR-11 | Chuyển trạng thái pipeline khác khi nhận offer / ghosted | ENUM `ON_HOLD`, `GHOSTED` trong `application_status` + dòng tương ứng trong `application_status_history` |
+| BR-12 **[v1.2]** | Email ra ngoài dùng template đã duyệt | Bảng `email_templates`; service tra `template_key` trước khi gửi (không FK cứng từ lịch sử gửi) |
+| BR-13 **[v1.2]** | ON_HOLD quá 14 ngày LV hoặc JD đóng → REJECTED | Cron + service; cập nhật `applications.status`; ghi `application_status_history` |
 
 Hai rule BR-03 và BR-04 là ví dụ cho thấy **không phải mọi business rule đều enforce được bằng constraint tại DB** — đây là nội dung dự kiến được hỏi khi bảo vệ (xem `06_conventions_shared.md` mục 6).
 
@@ -330,9 +363,9 @@ Cả hai cột cache đều được đồng bộ lại tại đúng thời đi�
 
 ### 4.6.3. Đánh đổi single-table inheritance cho `User`
 
-Thay vì tách `users` thành `users` + 4 bảng con (`recruiters`, `hiring_managers`, `interviewers`, `hr_admins`) theo đúng inheritance ở Class Diagram, ERD chọn **một bảng `users` với cột `role`**:
+Thay vì tách `users` thành `users` + 6 bảng con theo đúng inheritance ở Class Diagram, ERD chọn **một bảng `users` với cột `role`** (ENUM 6 giá trị):
 
-- **Được:** truy vấn "ai thuộc phòng ban X" không cần UNION 4 bảng; thêm vai trò mới (nếu có) chỉ cần thêm giá trị ENUM, không cần migration tạo bảng.
+- **Được:** truy vấn "ai thuộc phòng ban X" không cần UNION; thêm vai trò mới (như đã thêm `HEAD_OF_HR`/`FINANCE` ở v1.2) chỉ cần thêm giá trị ENUM, không cần migration tạo bảng.
 - **Mất:** không thể có ràng buộc riêng theo vai trò ở tầng DB (VD: chỉ `Interviewer` mới có "skill tags") — nếu cần, sẽ bổ sung bảng phụ 1–1 tuỳ chọn (`interviewer_profiles`) ở phiên bản sau, không phá vỡ schema hiện tại.
 
 Đây là ví dụ thực tế cho thấy Class Diagram (thiết kế hướng đối tượng) và ERD (thiết kế lưu trữ) có thể hợp lý khi khác nhau về cấu trúc, miễn là có lý do rõ ràng.
@@ -341,18 +374,18 @@ Thay vì tách `users` thành `users` + 4 bảng con (`recruiters`, `hiring_mana
 
 ## 4.7. Data Dictionary
 
-Data Dictionary đầy đủ cho toàn bộ 17 bảng (tên field, kiểu, null?, default, mô tả, ràng buộc) được trình bày trong phụ lục `docs/data_dictionary_C.md` để giữ chính văn chương gọn. Bảng 4.2 tóm tắt số liệu tổng quan.
+Data Dictionary đầy đủ cho toàn bộ **18** bảng (tên field, kiểu, null?, default, mô tả, ràng buộc) được trình bày trong phụ lục `docs/data_dictionary_C.md` để giữ chính văn chương gọn. Bảng 4.2 tóm tắt số liệu tổng quan.
 
-**Bảng 4.2 — Tóm tắt Data Dictionary**
+**Bảng 4.2 — Tóm tắt Data Dictionary (cập nhật v1.2)**
 
 | Chỉ số | Giá trị |
 |---|---|
-| Số bảng | 17 |
-| Tổng số cột | ~140 |
-| Số cột dùng ENUM | 9 (`user_role`, `jd_status`, `candidate_source`, `application_status`, `interview_status`, `participant_role`, `verdict`, `offer_status`, `approval_decision`) |
+| Số bảng | 18 (thêm `application_status_history`) |
+| Tổng số cột | ~150 |
+| Số cột dùng ENUM | 9 type (`user_role` giờ 6 giá trị; các type khác giữ nguyên) |
 | Số cột JSONB | 5 (`criteria`, `parsed_profile`, `benefits`, `variables`, `payload` × 2 bảng) |
-| Số ràng buộc UNIQUE (ngoài PK) | 8 |
-| Số ràng buộc CHECK | 13 |
+| Số ràng buộc UNIQUE (ngoài PK) | 11 (gồm `interviews(application_id, round_order)`, `offer_approvals(offer_id, level, attempt_no)`, ...) |
+| Số ràng buộc CHECK | 15 (gồm check `attempt_no` / `current_approval_attempt`) |
 | Số cột denormalize (cache) | 2 (`feedbacks.total_score`, `applications.current_round`) |
 
 ---
@@ -361,9 +394,9 @@ Data Dictionary đầy đủ cho toàn bộ 17 bảng (tên field, kiểu, null?
 
 Toàn bộ schema được cài đặt bằng PostgreSQL DDL chạy được tại `sql/schema.sql`, bao gồm:
 
-- 9 `CREATE TYPE ... AS ENUM` cho các cột trạng thái, đảm bảo dữ liệu không hợp lệ bị chặn ngay ở tầng DB thay vì chỉ kiểm tra ở tầng ứng dụng.
-- 17 `CREATE TABLE` với đầy đủ `PRIMARY KEY`, `FOREIGN KEY` (kèm quy tắc `ON DELETE` phù hợp với ngữ nghĩa nghiệp vụ — `RESTRICT` cho dữ liệu lịch sử quan trọng, `CASCADE` cho dữ liệu con phụ thuộc chặt, `SET NULL` cho tự tham chiếu và audit log), `UNIQUE`, `CHECK`.
-- 25 `CREATE INDEX` trên mọi khoá ngoại và các cột lọc thường dùng (`status`, `scheduled_at`, `deadline`), đáp ứng NFR hiệu năng ở spec mục 11 ("trang danh sách load ≤2s cho ≤500 record").
+- 9 `CREATE TYPE ... AS ENUM` cho các cột trạng thái, đảm bảo dữ liệu không hợp lệ bị chặn ngay ở tầng DB thay vì chỉ kiểm tra ở tầng ứng dụng. `user_role` gồm 6 giá trị (v1.2).
+- 18 `CREATE TABLE` với đầy đủ `PRIMARY KEY`, `FOREIGN KEY` (kèm quy tắc `ON DELETE` phù hợp), `UNIQUE`, `CHECK`.
+- Index trên mọi khoá ngoại và các cột lọc thường dùng (`status`, `scheduled_at`, `deadline`, `application_status_history.changed_at`), đáp ứng NFR hiệu năng ở spec mục 11.
 
 Script có thể chạy trực tiếp trên một database PostgreSQL rỗng:
 
@@ -376,6 +409,20 @@ psql -d ats_mini -f sql/schema.sql
 
 ## 4.9. Kết luận chương
 
-Chương 4 đã xây dựng đầy đủ cấu trúc dữ liệu cho hệ thống ATS mini qua 3 tầng trừu tượng (Domain Model → Class Diagram → ERD), với 17 entity đáp ứng đủ các yêu cầu kỹ thuật: quan hệ N–N (`Interview`–`User` qua `InterviewParticipant`), quan hệ đệ quy (`Department`), subtype/inheritance (`User` → 4 vai trò), và interface (`Approvable`). Schema đạt 3NF với 2 điểm denormalize có chủ đích và lý do rõ ràng, được cài đặt thành DDL PostgreSQL chạy được, sẵn sàng làm nền cho thiết kế kiến trúc và giao diện ở Chương 5.
+Chương 4 đã xây dựng đầy đủ cấu trúc dữ liệu cho hệ thống ATS mini qua 3 tầng trừu tượng (Domain Model → Class Diagram → ERD), với **18** entity đáp ứng đủ các yêu cầu kỹ thuật: quan hệ N–N (`Interview`–`User` qua `InterviewParticipant`), quan hệ đệ quy (`Department`), subtype/inheritance (`User` → 6 vai trò), và interface (`Approvable`). Schema đạt 3NF với 2 điểm denormalize có chủ đích và lý do rõ ràng, được cài đặt thành DDL PostgreSQL chạy được, sẵn sàng làm nền cho thiết kế kiến trúc và giao diện ở Chương 5.
 
-Các điểm cần lưu ý khi cross-review với B (khớp `application_status`/`interview_status`/`offer_status` ENUM với state machine STATE-01) và D (ERD làm cơ sở chọn PostgreSQL + xác định index cho Reporting service) đã được đối chiếu và không phát hiện mâu thuẫn tại thời điểm viết chương này.
+---
+
+## 4.10. Addendum — cập nhật sau audit (v1.1 / v1.2)
+
+| # | Thay đổi | File | Ghi chú |
+|---|---|---|---|
+| 1 | `attempt_no` + `current_approval_attempt`; `UNIQUE(application_id, round_order)` trên `interviews` | `sql/schema.sql`, dictionary | Vá theo audit B (v1.1) |
+| 2 | Đồng bộ ERD / Class / Domain / Bảng 4.2 với schema v1.1–v1.2 | `diagrams/C_*.md`, Chương 4 | P0 audit C |
+| 3 | Thêm `HEAD_OF_HR`, `FINANCE` vào `user_role` + subtype Class | schema, Class, dictionary | Khớp BR-08 / ACT-02 / SEQ-02 |
+| 4 | Bổ sung BR-05, BR-12, BR-13 vào Bảng 4.1 | Chương 4 | P1 |
+| 5 | Thêm bảng `application_status_history` | schema, ERD, Domain, Class, dictionary | P1 — time-in-stage |
+| 6 | Làm rõ quy ước `updated_at` (append-only không bắt buộc) + Candidate không có hàng `notifications` | ERD, dictionary | Sửa tự mâu thuẫn checklist |
+| 7 | Bỏ `Candidate.linkEmail()` khỏi Class (chưa có bảng đa email) | Class Diagram | Tránh method “ảo” |
+
+Chi tiết ghi tại `docs/change_log.md`. Các số liệu nghiệp vụ liên quan BR-13 (14 ngày) vẫn cần A xác nhận ở Sync S4.

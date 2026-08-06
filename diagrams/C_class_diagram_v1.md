@@ -1,13 +1,13 @@
 # C_class_diagram_v1 — Class Diagram (Logical)
 
 **Người vẽ:** C (Data Architect)
-**Phiên bản:** v1
+**Phiên bản:** v1.2 (đồng bộ schema sau audit Chương 3 + 4 — xem `docs/change_log.md`)
 **Mức trừu tượng:** Logical — có attribute kèm kiểu dữ liệu (String, Int, Decimal, DateTime, Enum, JSON), có method mang ý nghĩa nghiệp vụ, có inheritance/interface, có association class.
 
 Đáp ứng đủ tiêu chí "Done" ở `03_person_C_data.md` mục 7:
 - Mọi class ≥3 attribute (không tính id).
-- ≥5 method có ý nghĩa nghiệp vụ (thực tế có 14 method).
-- 1 inheritance: `User` → `Recruiter` / `HiringManager` / `Interviewer` / `HRAdmin`.
+- ≥5 method có ý nghĩa nghiệp vụ (thực tế có 14+ method).
+- 1 inheritance: `User` → `Recruiter` / `HiringManager` / `Interviewer` / `HRAdmin` / `HeadOfHR` / `Finance` **[v1.2]**.
 - 1 interface: `Approvable`, được implement bởi `Offer` và `JobDescription`.
 - 1 association class: `InterviewParticipant` gắn thêm thuộc tính cho quan hệ N–N giữa `Interview` và `User`.
 
@@ -55,6 +55,15 @@ classDiagram
     class HRAdmin {
         +manageUsers() void
         +approveEmailTemplate(tpl EmailTemplate) void
+    }
+
+    class HeadOfHR {
+        +decideOfferLevel2(offer Offer) void
+        +viewReports() void
+    }
+
+    class Finance {
+        +decideOfferLevel3(offer Offer) void
     }
 
     class Approvable {
@@ -111,7 +120,6 @@ classDiagram
         +CandidateSource source
         +JSON parsedProfile
         +addToTalentPool() void
-        +linkEmail(newEmail String) void
     }
 
     class Attachment {
@@ -134,6 +142,17 @@ classDiagram
         +submit() void
         +transitionTo(status ApplicationStatus) void
         +placeOnHold() void
+        +recordStatusChange(to ApplicationStatus, actor User) void
+    }
+
+    class ApplicationStatusHistory {
+        +Long id
+        +Long applicationId
+        +ApplicationStatus fromStatus
+        +ApplicationStatus toStatus
+        +Long actorId
+        +DateTime changedAt
+        +String note
     }
 
     class Interview {
@@ -185,11 +204,13 @@ classDiagram
         +Date deadline
         +OfferStatus status
         +Int currentApprovalLevel
+        +Int currentApprovalAttempt
         +determineApprovalLevels() Int
         +isExpired() Boolean
         +approve(level Int) void
         +reject(reason String) void
         +isFullyApproved() Boolean
+        +bumpApprovalAttempt() void
     }
 
     class OfferApproval {
@@ -197,6 +218,7 @@ classDiagram
         +Long offerId
         +Long approverId
         +Int level
+        +Int attemptNo
         +Decision decision
         +String comment
         +DateTime decidedAt
@@ -233,6 +255,8 @@ classDiagram
     User <|-- HiringManager
     User <|-- Interviewer
     User <|-- HRAdmin
+    User <|-- HeadOfHR
+    User <|-- Finance
 
     Approvable <|.. Offer
     Approvable <|.. JobDescription
@@ -249,6 +273,8 @@ classDiagram
     Candidate "1" --> "0..*" Attachment
     Application "1" --> "0..*" Interview
     Application "1" --> "0..1" Offer
+    Application "1" --> "0..*" ApplicationStatusHistory
+    User "0..1" --> "0..*" ApplicationStatusHistory
     Interview "1" --> "0..*" InterviewParticipant
     User "1" --> "0..*" InterviewParticipant
     Interview "1" --> "0..*" Feedback
@@ -264,10 +290,18 @@ classDiagram
 
 ## Ghi chú thiết kế
 
-### Inheritance: `User` → 4 subtype
-Chọn mô hình hoá 4 vai trò (`Recruiter`, `HiringManager`, `Interviewer`, `HRAdmin`) như subtype của `User` ở tầng logical vì mỗi vai trò có **hành vi (method) khác nhau rõ rệt** (Recruiter quản lý JD, HiringManager duyệt offer, Interviewer nộp feedback, HRAdmin quản trị hệ thống) — đúng tinh thần OOP là tách theo hành vi, không chỉ theo dữ liệu.
+### Inheritance: `User` → 6 subtype **[v1.2]**
+Chọn mô hình hoá các vai trò như subtype của `User` ở tầng logical vì mỗi vai trò có **hành vi (method) khác nhau rõ rệt**:
+- `Recruiter` — quản lý JD, sàng lọc CV
+- `HiringManager` — duyệt JD / offer cấp 1
+- `Interviewer` — nộp feedback
+- `HRAdmin` — quản trị user, template email
+- `HeadOfHR` — duyệt offer cấp 2 (BR-08 vượt band ≤10%), xem báo cáo
+- `Finance` — duyệt offer cấp 3 (BR-08 vượt band >10%)
 
-Ở tầng ERD (physical), 4 subtype này **không** tách thành 4 bảng riêng mà dùng **single-table inheritance** (một bảng `users` với cột `role` là enum) — xem giải thích đánh đổi trong phần "Normalization analysis" của `report/chapter_4_data.md`. Đây là ví dụ điển hình cho thấy Class Diagram (logical, hướng OOP) và ERD (physical, hướng lưu trữ) có thể khác nhau về cấu trúc dù cùng biểu diễn 1 khái niệm nghiệp vụ.
+Trước v1.2 chỉ có 4 subtype; thiếu `HeadOfHR`/`Finance` khiến Class Diagram không khớp ACT-02/SEQ-02 của B.
+
+Ở tầng ERD (physical), dùng **single-table inheritance** (một bảng `users` với cột `role` ENUM 6 giá trị) — xem `report/chapter_4_data.md`.
 
 ### Interface: `Approvable`
 Cả `JobDescription` (được `HiringManager` duyệt mở) và `Offer` (được duyệt nhiều cấp theo BR-08) đều có chung hành vi "có thể duyệt/từ chối theo cấp". Trừu tượng hoá thành interface `Approvable` giúp tầng service (`ApprovalWorkflow` — xem sequence diagram của B) xử lý đồng nhất cho cả 2 loại đối tượng.
@@ -277,3 +311,9 @@ Quan hệ N–N giữa `Interview` và `User` không phải quan hệ N–N "tr�
 
 ### Composition: `Feedback` *-- `FeedbackCriterion`
 Dùng quan hệ composition (hình thoi đặc) vì `FeedbackCriterion` không có ý nghĩa tồn tại độc lập ngoài `Feedback` cha của nó — xoá `Feedback` phải xoá toàn bộ `FeedbackCriterion` liên quan (ánh xạ sang `ON DELETE CASCADE` ở ERD/SQL).
+
+### ApplicationStatusHistory **[v1.2]**
+Mỗi lần `Application.transitionTo()` / `recordStatusChange()` ghi 1 dòng lịch sử — phục vụ time-in-stage và audit chặt hơn `AuditLog` polymorphic. Append-only (không `updatedAt`).
+
+### Candidate email **[v1.2]**
+Đã bỏ method `linkEmail()` khỏi Class Diagram vì schema hiện tại chỉ có `candidates.email UNIQUE` (1 email). Nếu cần hỗ trợ đổi email nhiều lần (rủi ro spec mục 15), sẽ thêm bảng `candidate_emails` ở phiên bản sau — không giả vờ có hành vi mà chưa có cấu trúc lưu trữ.

@@ -1,7 +1,7 @@
 # Data Dictionary — Chương 4 (Person C)
 
-**Phiên bản:** v1
-**Phạm vi:** Toàn bộ 17 bảng trong `diagrams/C_erd_v1.md` / `sql/schema.sql`.
+**Phiên bản:** v1.2 (audit Chương 4 — role BR-08 + status history; xem `docs/change_log.md`)
+**Phạm vi:** Toàn bộ 18 bảng trong `diagrams/C_erd_v1.md` / `sql/schema.sql`.
 **Quy ước:** `NN` = NOT NULL, mặc định thời gian dùng `now()` (UTC), mọi khoá ngoại (FK) đều có index đi kèm (không lặp lại ghi chú "có index" ở từng dòng để bảng gọn — xem tổng hợp index ở cuối file).
 
 Ghi chú thiết kế đặc biệt (denormalize / cache) được đánh dấu **[DENORM]**.
@@ -27,13 +27,13 @@ Ghi chú thiết kế đặc biệt (denormalize / cache) được đánh dấu 
 | id | BIGSERIAL | NN | auto | Khoá chính | PK |
 | email | VARCHAR(255) | NN | — | Email đăng nhập (SSO) | UNIQUE |
 | name | VARCHAR(150) | NN | — | Họ tên | — |
-| role | ENUM `user_role` | NN | — | Vai trò: RECRUITER, HIRING_MANAGER, INTERVIEWER, HR_ADMIN | — |
+| role | ENUM `user_role` | NN | — | Vai trò: RECRUITER, HIRING_MANAGER, INTERVIEWER, HR_ADMIN, **HEAD_OF_HR**, **FINANCE** (v1.2) | — |
 | department_id | BIGINT | NN | — | Phòng ban trực thuộc | FK → departments.id, ON DELETE RESTRICT |
 | is_active | BOOLEAN | NN | TRUE | Còn làm việc hay đã rời công ty | — |
 | created_at | TIMESTAMP | NN | now() | — | — |
 | updated_at | TIMESTAMP | NN | now() | — | — |
 
-**Ghi chú:** `role` dùng single-table inheritance thay cho 4 bảng con (`Recruiter`, `HiringManager`...) — xem Class Diagram.
+**Ghi chú:** `role` dùng single-table inheritance thay cho 6 bảng con. **[v1.2]** Thêm `HEAD_OF_HR` / `FINANCE` để khớp BR-08 (cấp duyệt 2 và 3). `HR_ADMIN` giữ vai trò cấu hình hệ thống (user, template), không gộp với Head of HR.
 
 ---
 
@@ -142,6 +142,22 @@ Ghi chú thiết kế đặc biệt (denormalize / cache) được đánh dấu 
 
 ---
 
+## 8b. application_status_history **[v1.2]**
+
+| Field | Kiểu | Null? | Default | Mô tả | Ràng buộc |
+|---|---|---|---|---|---|
+| id | BIGSERIAL | NN | auto | Khoá chính | PK |
+| application_id | BIGINT | NN | — | Application bị đổi trạng thái | FK → applications.id, ON DELETE CASCADE |
+| from_status | ENUM `application_status` | NULL | NULL | Trạng thái trước (NULL khi tạo Application = NEW) | — |
+| to_status | ENUM `application_status` | NN | — | Trạng thái sau | — |
+| actor_id | BIGINT | NULL | NULL | Người thực hiện (NULL = System/cron, VD BR-05/BR-13) | FK → users.id, ON DELETE SET NULL |
+| changed_at | TIMESTAMP | NN | now() | Thời điểm chuyển | — |
+| note | VARCHAR(255) | NULL | NULL | Ghi chú ngắn (VD: lý do hold hết hạn) | — |
+
+**Ghi chú thiết kế:** Bảng **append-only** (không `updated_at`) — mỗi transition của STATE-01 ghi 1 dòng. Phục vụ time-in-stage / funnel chi tiết tốt hơn `audit_logs` polymorphic. Service gọi `Application.recordStatusChange()` mỗi khi `transitionTo()`.
+
+---
+
 ## 9. interviews
 
 | Field | Kiểu | Null? | Default | Mô tả | Ràng buộc |
@@ -157,6 +173,8 @@ Ghi chú thiết kế đặc biệt (denormalize / cache) được đánh dấu 
 | updated_at | TIMESTAMP | NN | now() | — | — |
 
 **Ghi chú BR-03:** "không xếp 2 phỏng vấn trùng giờ cho 1 interviewer" **không** thể biểu diễn bằng CHECK constraint đơn giản (phải so sánh khoảng thời gian giữa nhiều dòng của bảng `interview_participants`/`interviews`). Enforce bằng: (1) lock Redis `(interviewer_id, time_slot)` ở tầng service trước khi insert (xem SEQ-01 của B), (2) index `(scheduled_at)` trên `interviews` + `(interviewer_id)` trên `interview_participants` để query kiểm tra xung đột nhanh trước khi insert.
+
+**Ràng buộc bổ sung [v1.1]:** `UNIQUE(application_id, round_order)` — thêm qua audit Chương 3 của B, đảm bảo "reschedule" (STATE-02, `diagrams/B_state_interview_v1.md`) luôn là **UPDATE** lại dòng `interviews` hiện có (đổi `scheduled_at` + `status`), không tạo dòng mới cho cùng vòng phỏng vấn của cùng application. Cần xác nhận với B/D tại Sync S4.
 
 ---
 
@@ -219,10 +237,11 @@ Ghi chú thiết kế đặc biệt (denormalize / cache) được đánh dấu 
 | deadline | DATE | NN | — | Hạn phản hồi (BR-09: tối đa 7 ngày làm việc) | — |
 | status | ENUM `offer_status` | NN | 'DRAFT' | DRAFT / PENDING_APPROVAL / APPROVED / SIGNED_BY_COMPANY / ACCEPTED / DECLINED / NEGOTIATING / EXPIRED / REJECTED_INTERNALLY | — |
 | current_approval_level | INT | NN | 0 | Cấp duyệt hiện tại (0 = chưa gửi duyệt) theo BR-08 | CHECK current_approval_level >= 0 |
+| current_approval_attempt **[v1.1]** | INT | NN | 1 | Lần duyệt hiện tại — tăng lên khi quy trình bị Request Change và chạy lại từ cấp 1 (UC-04 A4.1) | CHECK current_approval_attempt > 0 |
 | created_at | TIMESTAMP | NN | now() | — | — |
 | updated_at | TIMESTAMP | NN | now() | — | — |
 
-**Ràng buộc bổ sung:** `UNIQUE(application_id)` biểu diễn quan hệ 1–1 (mỗi application tối đa 1 offer đang hoạt động — offer cũ bị expired/declined thì có thể tạo offer mới, nên thực tế cho phép nhiều dòng lịch sử; nếu cần giữ lịch sử offer, bỏ UNIQUE và thêm cột `is_current`. Ở v1, chọn đơn giản: 1 offer/application, tạo offer mới = update dòng cũ).
+**Ràng buộc bổ sung:** `UNIQUE(application_id)` biểu diễn quan hệ 1–1 (mỗi application tối đa 1 offer đang hoạt động — offer cũ bị expired/declined thì có thể tạo offer mới, nên thực tế cho phép nhiều dòng lịch sử; nếu cần giữ lịch sử offer, bỏ UNIQUE và thêm cột `is_current`. Ở v1, chọn đơn giản: 1 offer/application, tạo offer mới = update dòng cũ). Xem `offer_approvals.attempt_no` (mục 14) — cặp `(current_approval_level, current_approval_attempt)` xác định chính xác đang ở cấp nào, lần duyệt thứ mấy.
 
 ---
 
@@ -234,12 +253,17 @@ Ghi chú thiết kế đặc biệt (denormalize / cache) được đánh dấu 
 | offer_id | BIGINT | NN | — | Offer cần duyệt | FK → offers.id, ON DELETE CASCADE |
 | approver_id | BIGINT | NN | — | Người duyệt ở cấp này | FK → users.id, ON DELETE RESTRICT |
 | level | INT | NN | — | Cấp duyệt: 1 = Hiring Manager, 2 = Head of HR, 3 = Finance | CHECK level BETWEEN 1 AND 3 |
+| attempt_no **[v1.1]** | INT | NN | 1 | Lần duyệt thứ mấy — tăng lên mỗi khi "duyệt lại từ cấp 1" sau Request Change | CHECK attempt_no > 0 |
 | decision | ENUM `approval_decision` | NN | 'PENDING' | PENDING / APPROVED / REJECTED / REQUEST_CHANGE | — |
 | comment | TEXT | NULL | NULL | Ghi chú khi reject/request change | — |
 | decided_at | TIMESTAMP | NULL | NULL | Thời điểm ra quyết định | — |
 | created_at | TIMESTAMP | NN | now() | — | — |
 
-**Ràng buộc bổ sung:** `UNIQUE(offer_id, level)` — mỗi cấp duyệt chỉ có 1 bản ghi cho mỗi offer (nếu Request Change thì quy trình duyệt "bắt đầu lại từ cấp 1" theo UC-04 A4.1 → tạo lại các dòng approval, không update chồng lên dòng cũ, để giữ lịch sử qua `AuditLog`).
+**Ràng buộc bổ sung [v1.1]:** `UNIQUE(offer_id, level, attempt_no)` — trước đây là `UNIQUE(offer_id, level)`,
+đã phát hiện qua audit Chương 3 của B rằng constraint cũ **chặn** đúng cơ chế "duyệt lại từ cấp 1"
+mà chính ghi chú này mô tả (tạo lại dòng approval cùng level thì sẽ đụng UNIQUE cũ). Thêm
+`attempt_no` để mỗi lần chạy lại toàn bộ quy trình duyệt (UC-04 A4.1) là 1 attempt riêng biệt,
+giữ đủ lịch sử qua `AuditLog` như ý định ban đầu mà không vi phạm ràng buộc duy nhất.
 
 ---
 
@@ -284,6 +308,8 @@ Ghi chú thiết kế đặc biệt (denormalize / cache) được đánh dấu 
 | is_read | BOOLEAN | NN | FALSE | Đã đọc chưa | — |
 | created_at | TIMESTAMP | NN | now() | — | — |
 
+**Ghi chú [v1.2]:** Chỉ phục vụ user nội bộ (`users`). Candidate nhận thông báo qua **email** (NotificationService → EmailGateway, BR-12), không có hàng trong `notifications` — Candidate không phải `User`.
+
 ---
 
 ## Tổng hợp Index (ngoài PK/UNIQUE đã nêu ở từng bảng)
@@ -294,6 +320,7 @@ Ghi chú thiết kế đặc biệt (denormalize / cache) được đánh dấu 
 | job_descriptions | `department_id`, `hiring_manager_id`, `recruiter_id`, `status` | FK + filter danh sách JD theo trạng thái (spec mục 11: NFR hiệu năng) |
 | interview_processes | `jd_id`, `scorecard_template_id` | FK |
 | applications | `candidate_id`, `jd_id`, `status` | FK + filter pipeline kanban theo trạng thái |
+| application_status_history | `application_id`, `changed_at`, `to_status` | **[v1.2]** time-in-stage / funnel |
 | interviews | `application_id`, `scheduled_at` | FK + hỗ trợ kiểm tra xung đột lịch (BR-03) |
 | interview_participants | `interview_id`, `interviewer_id` | FK 2 chiều cho N–N |
 | feedbacks | `interview_id`, `interviewer_id` | FK |
@@ -305,3 +332,5 @@ Ghi chú thiết kế đặc biệt (denormalize / cache) được đánh dấu 
 | notifications | `user_id`, `is_read` | FK + query "thông báo chưa đọc" |
 
 Chi tiết cài đặt xem `sql/schema.sql`.
+
+**Quy ước timestamp [v1.2]:** Bảng mutable có `created_at` + `updated_at`. Bảng append-only (`audit_logs`, `notifications`, `application_status_history`, `feedback_criteria`, `interview_participants`, `offer_approvals`) chỉ có `created_at` hoặc `changed_at` — không bắt buộc `updated_at`.
