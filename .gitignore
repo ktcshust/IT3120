@@ -1,0 +1,17 @@
+# Python — sinh ra khi chạy scripts/ (render sơ đồ, xuất .docx)
+__pycache__/
+*.py[cod]
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# File tạm của script chụp ảnh và render sơ đồ
+*.tmp
+.mmd_tmp/
+ats-shots.*/
+
+# Trình soạn thảo
+.vscode/
+.idea/
+*.swp

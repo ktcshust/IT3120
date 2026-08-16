@@ -1,0 +1,2397 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATS mini — Prototype</title>
+<meta name="description" content="Prototype click-through 11 màn hình của hệ thống ATS mini (VXTech) — deliverable D8, Person D.">
+<style>
+/* ============================================================
+   ATS mini — Prototype (D8)
+   Một file duy nhất, không tải tài nguyên ngoài, chạy được offline.
+   ============================================================ */
+
+/* ---- 1. Reset ---- */
+*,*::before,*::after{box-sizing:border-box}
+html,body,h1,h2,h3,h4,p,ul,ol,li,figure,fieldset,legend{margin:0;padding:0}
+ul,ol{list-style:none}
+button,input,select,textarea{font:inherit;color:inherit}
+img,svg{max-width:100%}
+table{border-collapse:collapse;width:100%}
+
+/* ---- 2. Design tokens ---- */
+:root{
+  color-scheme:light;
+  --bg:#f4f4f2;
+  --surface:#fcfcfb;
+  --surface-2:#f0efec;
+  --surface-3:#e7e6e1;
+  --border:#dedcd6;
+  --border-strong:#c6c4bc;
+  --text-1:#0b0b0b;
+  --text-2:#52514e;
+  --text-3:#75746e;
+  --accent:#2a78d6;
+  --accent-strong:#1c5cab;
+  --accent-ink:#154784;
+  --accent-soft:#e6f0fd;
+  --good-ink:#0c6b45;   --good-soft:#dcf2e8;
+  --warn-ink:#8a5800;   --warn-soft:#fbeed3;
+  --danger-ink:#b32423; --danger-soft:#fbe3e3;
+  --info-ink:#154784;   --info-soft:#e6f0fd;
+  --neutral-ink:#52514e;--neutral-soft:#e7e6e1;
+  --violet-ink:#3d3090; --violet-soft:#e9e6f8;
+  --shadow-1:0 1px 2px rgba(11,11,11,.06),0 1px 3px rgba(11,11,11,.05);
+  --shadow-2:0 6px 16px rgba(11,11,11,.10),0 2px 6px rgba(11,11,11,.06);
+  --shadow-3:0 18px 48px rgba(11,11,11,.22);
+  --radius:10px;
+  --radius-sm:6px;
+  /* Chart tokens — ramp ordinal blue, đã kiểm tra tương phản (light) */
+  --f1:#86b6ef; --f2:#5598e7; --f3:#2a78d6; --f4:#1c5cab; --f5:#104281;
+  --series-1:#2a78d6;
+  --grid:#e2e1dc;
+  --target:#8a8880;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    color-scheme:dark;
+    --bg:#111110;
+    --surface:#1a1a19;
+    --surface-2:#232322;
+    --surface-3:#2c2c2a;
+    --border:#35352f;
+    --border-strong:#4a4a43;
+    --text-1:#ffffff;
+    --text-2:#c3c2b7;
+    --text-3:#97968d;
+    --accent:#3987e5;
+    --accent-strong:#6da7ec;
+    --accent-ink:#9ec5f4;
+    --accent-soft:#16273c;
+    --good-ink:#6fd3a6;   --good-soft:#12291f;
+    --warn-ink:#e8b866;   --warn-soft:#2e2312;
+    --danger-ink:#f08b8a; --danger-soft:#32191a;
+    --info-ink:#9ec5f4;   --info-soft:#16273c;
+    --neutral-ink:#c3c2b7;--neutral-soft:#2c2c2a;
+    --violet-ink:#b3aaf2; --violet-soft:#201e33;
+    --shadow-1:0 1px 2px rgba(0,0,0,.5);
+    --shadow-2:0 6px 16px rgba(0,0,0,.55);
+    --shadow-3:0 18px 48px rgba(0,0,0,.7);
+    --f1:#cde2fb; --f2:#9ec5f4; --f3:#6da7ec; --f4:#3987e5; --f5:#184f95;
+    --series-1:#3987e5;
+    --grid:#2f2f2b;
+    --target:#8b8a81;
+  }
+}
+
+/* ---- 3. Base ---- */
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg);
+  color:var(--text-1);
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+h1{font-size:20px;line-height:1.3;font-weight:650;letter-spacing:-.01em}
+h2{font-size:16px;line-height:1.35;font-weight:650}
+h3{font-size:13px;line-height:1.4;font-weight:650}
+a{color:var(--accent-ink)}
+.muted{color:var(--text-2)}
+.dim{color:var(--text-3)}
+.tiny{font-size:12px}
+.mono{font-variant-numeric:tabular-nums}
+.center{text-align:center}
+.right{text-align:right}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* ---- 4. Shell ---- */
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.shell[hidden]{display:none}
+.sidebar{
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;gap:4px;
+  padding:16px 12px;position:sticky;top:0;height:100vh;
+}
+.brand{display:flex;align-items:center;gap:9px;padding:4px 8px 14px}
+.brand-name{font-weight:700;font-size:15px;letter-spacing:-.01em}
+.brand-sub{font-size:11px;color:var(--text-3)}
+.nav-label{font-size:11px;font-weight:650;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;padding:12px 10px 6px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:8px 10px;border-radius:var(--radius-sm);
+  background:none;border:0;cursor:pointer;text-align:left;
+  color:var(--text-2);font-weight:500;
+}
+.nav-item:hover{background:var(--surface-2);color:var(--text-1)}
+.nav-item.is-current{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav-item .ic{flex:none;opacity:.9}
+.nav-item .ro{margin-left:auto;font-size:10px;color:var(--text-3);font-weight:600;border:1px solid var(--border);border-radius:4px;padding:0 4px}
+.sidebar-foot{margin-top:auto;font-size:11px;color:var(--text-3);padding:10px;border-top:1px solid var(--border)}
+
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;gap:12px;
+  padding:10px 20px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+}
+.crumb{font-size:12px;color:var(--text-2);white-space:nowrap}
+.crumb b{color:var(--text-1);font-weight:600}
+.search{
+  flex:1;max-width:320px;margin-left:8px;
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:999px;padding:5px 12px;color:var(--text-3);
+}
+.search input{background:none;border:0;outline:none;width:100%;font-size:13px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.icon-btn{
+  position:relative;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:5px 8px;cursor:pointer;color:var(--text-2);
+}
+.icon-btn:hover{background:var(--surface-3);color:var(--text-1)}
+.badge-dot{
+  position:absolute;top:-6px;right:-6px;background:var(--danger-ink);color:#fff;
+  font-size:10px;font-weight:700;border-radius:999px;padding:1px 5px;line-height:1.4;
+}
+@media (prefers-color-scheme:dark){.badge-dot{color:#1a1a19}}
+.role-picker{display:flex;align-items:center;gap:6px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:3px 8px}
+.role-picker label{font-size:11px;font-weight:650;color:var(--accent-ink);white-space:nowrap}
+.role-picker select{background:none;border:0;outline:none;font-size:13px;font-weight:600;color:var(--accent-ink);cursor:pointer}
+.avatar{width:30px;height:30px;border-radius:999px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+@media (prefers-color-scheme:dark){.avatar{color:#0b1626}}
+.who{font-size:12px;line-height:1.25;white-space:nowrap}
+.who b{display:block;font-weight:650}
+
+.content{padding:20px 24px 96px;max-width:1320px;width:100%}
+
+/* ---- 5. Screens ---- */
+.screen{display:none}
+.screen.is-active{display:block}
+.screen--plain.is-active{display:flex;min-height:100vh}
+.page-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.page-head .grow{flex:1;min-width:260px}
+.page-head p{color:var(--text-2);font-size:13px;margin-top:3px}
+.scr-tag{
+  font-size:11px;font-weight:700;letter-spacing:.04em;
+  color:var(--violet-ink);background:var(--violet-soft);
+  border-radius:4px;padding:2px 6px;display:inline-block;margin-bottom:6px;
+}
+
+/* ---- 6. Card / panel ---- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-1)}
+.card-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.card-head h2,.card-head h3{flex:1;min-width:0}
+.card-body{padding:16px}
+.grid{display:grid;gap:16px}
+.g-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g-side{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}
+.g-inbox{grid-template-columns:300px minmax(0,1fr)}
+@media (max-width:1080px){.g-4{grid-template-columns:repeat(2,minmax(0,1fr))}.g-3,.g-side,.g-inbox{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:720px){.g-2,.g-4{grid-template-columns:minmax(0,1fr)}.shell{grid-template-columns:1fr}.sidebar{display:none}}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.row-tight{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.spacer{flex:1}
+.sep{height:1px;background:var(--border);margin:14px 0}
+
+/* ---- 7. KPI tile ---- */
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-1)}
+.kpi .k-label{font-size:12px;color:var(--text-2);font-weight:550}
+.kpi .k-value{font-size:26px;font-weight:680;letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .k-foot{font-size:11px;color:var(--text-3);margin-top:2px}
+
+/* ---- 8. Buttons ---- */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  border:1px solid var(--border-strong);background:var(--surface);
+  color:var(--text-1);border-radius:var(--radius-sm);
+  padding:7px 13px;font-size:13px;font-weight:550;cursor:pointer;
+}
+.btn:hover{background:var(--surface-2)}
+.btn-primary{background:var(--accent-strong);border-color:var(--accent-strong);color:#fff}
+.btn-primary:hover{background:var(--accent);border-color:var(--accent)}
+@media (prefers-color-scheme:dark){.btn-primary{color:#08131f}}
+.btn-good{background:var(--good-soft);border-color:var(--good-ink);color:var(--good-ink)}
+.btn-danger{background:var(--danger-soft);border-color:var(--danger-ink);color:var(--danger-ink)}
+.btn-warn{background:var(--warn-soft);border-color:var(--warn-ink);color:var(--warn-ink)}
+.btn-ghost{background:none;border-color:transparent;color:var(--text-2)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text-1)}
+.btn-sm{padding:4px 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn[hidden]{display:none}
+
+/* ---- 9. Chip ---- */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:650;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.chip::before{content:"";width:6px;height:6px;border-radius:999px;background:currentColor;flex:none}
+.chip-neutral{background:var(--neutral-soft);color:var(--neutral-ink)}
+.chip-info{background:var(--info-soft);color:var(--info-ink)}
+.chip-good{background:var(--good-soft);color:var(--good-ink)}
+.chip-warn{background:var(--warn-soft);color:var(--warn-ink)}
+.chip-danger{background:var(--danger-soft);color:var(--danger-ink)}
+.chip-violet{background:var(--violet-soft);color:var(--violet-ink)}
+.chip-plain::before{display:none}
+
+/* ---- 10. Table ---- */
+.tbl{font-size:13px}
+.tbl th{
+  text-align:left;font-size:11px;font-weight:650;color:var(--text-3);
+  text-transform:uppercase;letter-spacing:.05em;
+  padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;
+}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover{background:var(--surface-2)}
+.tbl-wrap{overflow-x:auto}
+
+/* ---- 11. Form ---- */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field > label{font-size:12px;font-weight:650;color:var(--text-2)}
+.field .hint{font-size:11px;color:var(--text-3)}
+input[type=text],input[type=number],input[type=email],input[type=date],select,textarea{
+  background:var(--surface);border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);padding:7px 10px;font-size:13px;width:100%;outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea{min-height:64px;resize:vertical;font-family:inherit}
+.check{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:var(--surface)}
+.check:hover{background:var(--surface-2)}
+.check input{margin-top:3px;flex:none;accent-color:var(--accent)}
+.check.is-on{border-color:var(--accent);background:var(--accent-soft)}
+.check .c-sub{font-size:11px;color:var(--text-3);display:block}
+
+/* ---- 12. Alert ---- */
+.alert{display:flex;gap:10px;border-radius:var(--radius);padding:11px 13px;font-size:13px;border:1px solid}
+.alert .a-ic{font-size:15px;line-height:1.2;flex:none}
+.alert b{display:block;margin-bottom:2px}
+.alert-info{background:var(--info-soft);border-color:var(--accent);color:var(--info-ink)}
+.alert-good{background:var(--good-soft);border-color:var(--good-ink);color:var(--good-ink)}
+.alert-warn{background:var(--warn-soft);border-color:var(--warn-ink);color:var(--warn-ink)}
+.alert-danger{background:var(--danger-soft);border-color:var(--danger-ink);color:var(--danger-ink)}
+.alert-neutral{background:var(--surface-2);border-color:var(--border);color:var(--text-2)}
+.alert[hidden]{display:none}
+
+/* ---- 13. Kanban ---- */
+.kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;align-items:flex-start}
+.kcol{
+  flex:0 0 232px;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius);display:flex;flex-direction:column;min-height:220px;
+}
+.kcol-head{display:flex;align-items:center;gap:6px;padding:9px 11px;border-bottom:1px solid var(--border)}
+.kcol-head h3{flex:1;font-size:12px}
+.kcol-count{font-size:11px;font-weight:700;color:var(--text-3);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:0 7px}
+.kcol-body{padding:9px;display:flex;flex-direction:column;gap:8px;min-height:120px}
+.kcol.drop-hover{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.kcol.is-blocked{opacity:.45}
+.kcol.is-blocked .kcol-head h3::after{content:' — khoá';font-weight:400;font-size:10px}
+.kcol.kb-target{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.kcard.kb-picked{box-shadow:0 0 0 2px var(--accent)}
+.kcard{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:9px 10px;box-shadow:var(--shadow-1);cursor:grab;
+}
+.kcard:active{cursor:grabbing}
+.kcard.is-drag{opacity:.4}
+.kcard .kc-name{font-weight:650;font-size:13px}
+.kcard .kc-meta{font-size:11px;color:var(--text-3);margin-top:2px}
+.kcard .kc-foot{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap}
+.kcard.is-locked{cursor:not-allowed;opacity:.85}
+.kempty{font-size:11px;color:var(--text-3);text-align:center;padding:14px 6px;border:1px dashed var(--border-strong);border-radius:var(--radius-sm)}
+
+/* ---- 14. Modal ---- */
+.modal-screen{display:none}
+.modal-screen.is-open{
+  display:flex;position:fixed;inset:0;z-index:80;
+  background:rgba(11,11,11,.45);backdrop-filter:blur(2px);
+  align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;
+}
+.modal{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow-3);width:min(760px,100%);
+}
+.modal-head{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border)}
+.modal-body{padding:18px;max-height:66vh;overflow-y:auto}
+.modal-foot{display:flex;align-items:center;gap:10px;padding:14px 18px;border-top:1px solid var(--border);background:var(--surface-2);border-radius:0 0 14px 14px}
+
+/* ---- 15. Slot / radio list ---- */
+.slot-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.slot-list{grid-template-columns:1fr}}
+.slot{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;cursor:pointer;background:var(--surface)}
+.slot:hover{background:var(--surface-2)}
+.slot input{accent-color:var(--accent);flex:none}
+.slot.is-on{border-color:var(--accent);background:var(--accent-soft)}
+.slot.is-conflict.is-on{border-color:var(--danger-ink);background:var(--danger-soft)}
+.slot .s-time{font-weight:600;font-size:13px;display:block}
+.slot .s-note{font-size:11px;color:var(--text-3);display:block}
+.slot.is-conflict .s-note{color:var(--danger-ink);font-weight:600}
+
+/* ---- 16. Scorecard ---- */
+.crit{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;background:var(--surface)}
+.crit + .crit{margin-top:10px}
+.crit-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.crit-head h3{flex:1;min-width:150px}
+.scale{display:flex;gap:6px}
+.scale label{
+  display:grid;place-items:center;width:34px;height:32px;
+  border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  cursor:pointer;font-weight:650;font-size:13px;background:var(--surface);
+}
+.scale label:hover{background:var(--surface-2)}
+.scale input{position:absolute;opacity:0;width:0;height:0}
+.scale label.is-on{background:var(--accent-strong);border-color:var(--accent-strong);color:#fff}
+@media (prefers-color-scheme:dark){.scale label.is-on{color:#08131f}}
+.avg-box{display:flex;align-items:baseline;gap:8px}
+.avg-box .av{font-size:30px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+
+/* ---- 17. Wizard ---- */
+.steps{display:flex;gap:6px;margin-bottom:18px}
+.step{flex:1;min-width:0}
+.step-bar{height:5px;border-radius:999px;background:var(--surface-3)}
+.step.is-done .step-bar,.step.is-on .step-bar{background:var(--accent)}
+.step-t{font-size:11px;font-weight:650;color:var(--text-3);margin-top:6px;display:block}
+.step.is-on .step-t{color:var(--accent-ink)}
+.step.is-done .step-t{color:var(--text-2)}
+.wstep{display:none}
+.wstep.is-on{display:block}
+.chain{display:flex;flex-direction:column;gap:8px}
+.chain-item{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;background:var(--surface)}
+.chain-item .lv{width:26px;height:26px;border-radius:999px;background:var(--surface-3);color:var(--text-2);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.chain-item.is-done .lv{background:var(--good-soft);color:var(--good-ink)}
+.chain-item.is-now{border-color:var(--accent)}
+.chain-item.is-now .lv{background:var(--accent);color:#fff}
+@media (prefers-color-scheme:dark){.chain-item.is-now .lv{color:#08131f}}
+.chain-item .cn{flex:1;min-width:0}
+.chain-item .cn b{display:block;font-size:13px}
+.chain-item .cn span{font-size:11px;color:var(--text-3)}
+
+/* ---- 18. Timeline ---- */
+.tl{position:relative;padding-left:22px}
+.tl::before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--border)}
+.tl-item{position:relative;padding-bottom:16px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{content:"";position:absolute;left:-19px;top:5px;width:9px;height:9px;border-radius:999px;background:var(--accent);border:2px solid var(--surface)}
+.tl-item.is-past::before{background:var(--border-strong)}
+.tl-item .t-time{font-size:11px;color:var(--text-3)}
+.tl-item .t-title{font-weight:600;font-size:13px}
+.tl-item .t-desc{font-size:12px;color:var(--text-2)}
+
+/* ---- 19. Portal (khung riêng) ---- */
+.portal{flex:1;display:flex;flex-direction:column;background:var(--bg)}
+.portal-top{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 22px;display:flex;align-items:center;gap:12px}
+.portal-wrap{width:min(880px,100%);margin:0 auto;padding:22px 18px 110px;display:flex;flex-direction:column;gap:16px}
+.portal-banner{background:var(--warn-soft);color:var(--warn-ink);border:1px solid var(--warn-ink);border-radius:var(--radius);padding:9px 13px;font-size:12px;font-weight:600}
+
+/* ---- 20. Login ---- */
+.login{flex:1;display:grid;place-items:center;padding:28px 16px;background:
+  radial-gradient(1100px 520px at 12% -10%, var(--accent-soft), transparent 62%), var(--bg)}
+.login-card{width:min(420px,100%);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-2);padding:26px}
+
+/* ---- 21. Charts ---- */
+.chart-card svg{display:block;width:100%;height:auto;overflow:visible}
+.chart-note{font-size:11px;color:var(--text-3);margin-top:8px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--text-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.empty-state{display:grid;place-items:center;text-align:center;padding:40px 18px;color:var(--text-3);border:1px dashed var(--border-strong);border-radius:var(--radius);gap:6px}
+.empty-state .es-ic{font-size:26px}
+
+/* ---- 22. Toast ---- */
+.toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:120;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{
+  background:var(--text-1);color:var(--surface);border-radius:999px;
+  padding:9px 17px;font-size:13px;font-weight:550;box-shadow:var(--shadow-2);
+  display:flex;align-items:center;gap:8px;max-width:min(560px,92vw);
+  animation:tin .22s ease-out;
+}
+.toast.is-good{background:var(--good-ink);color:#fff}
+.toast.is-danger{background:var(--danger-ink);color:#fff}
+@keyframes tin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---- 23. Demo toolbar + annotation ---- */
+.demobar{
+  position:fixed;right:18px;bottom:18px;z-index:110;
+  background:var(--surface);border:1px solid var(--border-strong);
+  border-radius:12px;box-shadow:var(--shadow-2);padding:10px 12px;
+  display:flex;flex-direction:column;gap:8px;width:250px;
+}
+.demobar .db-head{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3)}
+.demobar .db-step{font-size:12px;color:var(--text-2)}
+.demobar .db-step b{color:var(--text-1)}
+.demobar .db-row{display:flex;gap:6px}
+.demobar .db-row .btn{flex:1;justify-content:center}
+.annot{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:105;
+  width:min(620px,calc(100vw - 320px));
+  background:var(--violet-soft);border:1px solid var(--violet-ink);color:var(--violet-ink);
+  border-radius:12px;box-shadow:var(--shadow-2);padding:11px 15px;
+}
+.annot[hidden]{display:none}
+.annot .an-top{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.annot .an-tag{font-size:11px;font-weight:750;letter-spacing:.03em;border:1px solid currentColor;border-radius:4px;padding:0 5px}
+.annot .an-title{font-weight:700;font-size:13px}
+.annot p{font-size:12px;line-height:1.45}
+@media (max-width:900px){.annot{width:min(620px,calc(100vw - 36px));bottom:150px}}
+
+/* ---- 24. Tiện ích ---- */
+.ro-mask{position:relative}
+.ro-flag{font-size:10px;font-weight:700;color:var(--text-3);border:1px solid var(--border);border-radius:4px;padding:0 5px}
+.blocked{
+  border:1px dashed var(--border-strong);border-radius:var(--radius);
+  padding:20px;text-align:center;color:var(--text-3);background:var(--surface-2);
+}
+.blocked .bl-ic{font-size:22px;display:block;margin-bottom:4px}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<!-- ===== Bộ icon SVG nội tuyến (không dùng font icon ngoài) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="ic-dash"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="12" y="3" width="7" height="4" rx="1.5"/><rect x="12" y="9" width="7" height="10" rx="1.5"/><rect x="3" y="12" width="7" height="7" rx="1.5"/></g>
+    <g id="ic-board"><rect x="3" y="4" width="4.5" height="15" rx="1.5"/><rect x="9.7" y="4" width="4.5" height="10" rx="1.5"/><rect x="16.4" y="4" width="4.5" height="13" rx="1.5"/></g>
+    <g id="ic-user"><circle cx="11" cy="7.5" r="3.6"/><path d="M4 20c0-3.9 3.1-6.4 7-6.4s7 2.5 7 6.4z"/></g>
+    <g id="ic-score"><rect x="4" y="3" width="14" height="18" rx="2"/><rect x="7" y="7" width="8" height="1.7" rx=".8" fill="var(--surface)"/><rect x="7" y="11" width="8" height="1.7" rx=".8" fill="var(--surface)"/><rect x="7" y="15" width="5" height="1.7" rx=".8" fill="var(--surface)"/></g>
+    <g id="ic-offer"><path d="M5 3h9l5 5v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M13.6 3.4V8.6h5" fill="var(--surface)"/></g>
+    <g id="ic-inbox"><path d="M3 13.5 5.6 5h12.8L21 13.5V19a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13.5h5l1.2 2.2h5.6L16 13.5h5" fill="none" stroke="var(--surface)" stroke-width="1.6"/></g>
+    <g id="ic-chart"><rect x="3" y="12" width="4" height="8" rx="1.2"/><rect x="10" y="7" width="4" height="13" rx="1.2"/><rect x="17" y="3" width="4" height="17" rx="1.2"/></g>
+    <g id="ic-admin"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6 14 5l3-.7.6 3 2.7 1.5-1.4 2.7 1.4 2.7-2.7 1.5-.6 3-3-.7-2 2.4-2-2.4-3 .7-.6-3L3.7 15l1.4-2.7L3.7 9.6 6.4 8.1 7 5.1l3 .7z" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+    <g id="ic-logo"><rect x="1.5" y="1.5" width="21" height="21" rx="6"/><path d="M7.5 16.5 12 6.8l4.5 9.7" fill="none" stroke="var(--surface)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.4 13.4h5.2" fill="none" stroke="var(--surface)" stroke-width="2.1" stroke-linecap="round"/></g>
+  </defs>
+</svg>
+
+<!-- ============================================================
+     KHUNG ỨNG DỤNG NỘI BỘ (sidebar + topbar + content)
+     ============================================================ -->
+<div class="shell" id="shell" hidden>
+
+  <aside class="sidebar">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--accent)" aria-hidden="true"><use href="#ic-logo"/></svg>
+      <div>
+        <div class="brand-name">ATS mini</div>
+        <div class="brand-sub">VXTech</div>
+      </div>
+    </div>
+    <div class="nav-label">Điều hướng</div>
+    <nav id="nav" aria-label="Điều hướng chính"></nav>
+    <div class="sidebar-foot">
+      Prototype D8 — dữ liệu giả<br>Phiên bản v1.0 · 16/08/2026
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="crumb" id="crumb">VXTech · <b>Bảng điều khiển</b></div>
+      <div class="search">
+        <span aria-hidden="true">⌕</span>
+        <input type="text" placeholder="Tìm ứng viên, JD, offer…" aria-label="Ô tìm kiếm">
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" type="button" id="btn-lang" title="Chuyển ngôn ngữ giao diện (NFR-09)">VI<span class="dim"> / EN</span></button>
+        <button class="icon-btn" type="button" id="btn-bell" title="Thông báo trong ứng dụng" aria-label="Thông báo">
+          <span aria-hidden="true">🔔</span><span class="badge-dot" id="bell-count">4</span>
+        </button>
+        <div class="role-picker">
+          <label for="role-select">Vai trò</label>
+          <select id="role-select" title="Đổi vai trò để xem RBAC deny-by-default (BR-21, NFR-04)"></select>
+        </div>
+        <div class="avatar" id="who-avatar">NA</div>
+        <div class="who"><b id="who-name">Nguyễn Minh Anh</b><span class="dim" id="who-meta">Recruiter · Khối Nhân sự</span></div>
+        <button class="icon-btn" type="button" id="btn-logout" title="Đăng xuất, quay lại màn hình SSO">⎋</button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ============ SCR-02 — Dashboard Recruiter ============ -->
+      <section class="screen in-shell" id="scr-02" aria-labelledby="h-scr02">
+        <div class="page-head">
+          <div class="grow">
+            <span class="scr-tag">SCR-02 · UC-01, UC-02</span>
+            <h1 id="h-scr02">Bảng điều khiển tuyển dụng</h1>
+            <p>Tổng hợp JD đang phụ trách, việc cần xử lý và cảnh báo SLA của <span id="dash-owner">Nguyễn Minh Anh</span>.</p>
+          </div>
+          <div class="row-tight">
+            <button class="btn btn-sm" type="button" id="btn-dash-empty">Xem trạng thái trống</button>
+            <button class="btn btn-sm btn-primary" type="button" data-roles="RECRUITER" onclick="showScreen('scr-07')">+ Tạo offer</button>
+          </div>
+        </div>
+
+        <div id="dash-full">
+          <div class="grid g-4" style="margin-bottom:16px">
+            <div class="kpi"><div class="k-label">JD đang mở</div><div class="k-value">2</div><div class="k-foot">3 JD do bạn phụ trách (1 ở trạng thái DRAFT)</div></div>
+            <div class="kpi"><div class="k-label">CV chờ sàng lọc</div><div class="k-value">12</div><div class="k-foot">Cũ nhất: 3 ngày</div></div>
+            <div class="kpi"><div class="k-label">Phỏng vấn tuần này</div><div class="k-value">7</div><div class="k-foot">1 buổi chờ xác nhận</div></div>
+            <div class="kpi"><div class="k-label">Feedback quá hạn</div><div class="k-value" style="color:var(--danger-ink)">2</div><div class="k-foot">Quá 48h — BR-06</div></div>
+          </div>
+
+          <div class="grid g-side">
+            <div class="card">
+              <div class="card-head"><h2>JD đang phụ trách</h2><span class="chip chip-plain chip-neutral">Bảng đọc từ <span class="mono">job_descriptions</span></span></div>
+              <div class="tbl-wrap">
+                <table class="tbl">
+                  <thead><tr><th>Mã</th><th>Vị trí</th><th>Phòng ban</th><th class="right">CV</th><th class="right">PV</th><th>Trạng thái</th><th></th></tr></thead>
+                  <tbody id="jd-rows"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="stack">
+              <div class="card">
+                <div class="card-head"><h2>Việc cần xử lý</h2></div>
+                <div class="card-body" style="padding:10px 12px">
+                  <ul class="stack" style="gap:8px" id="task-list"></ul>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head"><h2>Cảnh báo SLA</h2><span class="chip chip-warn">SLAService</span></div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:9px">
+                  <div class="alert alert-warn"><span class="a-ic">⏱</span><div><b>1 ứng viên chưa xác nhận lịch</b>Bùi Tuấn Kiệt — còn 6 giờ trước mốc 24h (BR-05), quá hạn sẽ chuyển <span class="mono">NEED_RESCHEDULE</span>.</div></div>
+                  <div class="alert alert-danger"><span class="a-ic">!</span><div><b>2 feedback quá 48h</b>Đã nhắc Interviewer; quá 72h sẽ escalate lên Hiring Manager (UC-03 A2.1).</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dash-empty" hidden>
+          <div class="card"><div class="card-body">
+            <div class="empty-state">
+              <span class="es-ic" aria-hidden="true">▤</span>
+              <b>Chưa có JD nào được giao cho bạn</b>
+              <p class="tiny">Trạng thái rỗng của SCR-02: khi tài khoản Recruiter mới được tạo và chưa có <span class="mono">job_descriptions</span> nào ở trạng thái <span class="mono">OPEN</span>, màn hình hiển thị hướng dẫn thay vì bảng trống.</p>
+              <button class="btn btn-primary" type="button" id="btn-dash-full">Nạp dữ liệu mẫu</button>
+            </div>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- ============ SCR-03 — JD Detail / Kanban ============ -->
+      <section class="screen in-shell" id="scr-03" aria-labelledby="h-scr03">
+        <div class="page-head">
+          <div class="grow">
+            <span class="scr-tag">SCR-03 · UC-02 → UC-01</span>
+            <h1 id="h-scr03">JD-01 — Senior Backend Engineer (Java)</h1>
+            <p>Khối Công nghệ · Band 35.000.000 – 48.000.000 VND · Headcount 2 · Recruiter: Nguyễn Minh Anh · Hiring Manager: Trần Quốc Bảo</p>
+          </div>
+          <div class="row-tight">
+            <span class="chip chip-good">OPEN</span>
+            <button class="btn btn-sm" type="button" onclick="showScreen('scr-04')">Mở hồ sơ ứng viên</button>
+            <button class="btn btn-sm btn-primary" type="button" data-roles="RECRUITER" onclick="openSchedule()">Xếp lịch phỏng vấn</button>
+          </div>
+        </div>
+
+        <div class="alert alert-info" id="kanban-hint" style="margin-bottom:14px">
+          <span class="a-ic">↔</span>
+          <div><b>Kéo-thả để đổi trạng thái</b>Mỗi lần thả thẻ sang cột khác là một transition của STATE-01; hệ thống ghi <span class="mono">application_status_history</span> và một dòng <span class="mono">audit_logs</span> (NFR-06).</div>
+        </div>
+        <div class="alert alert-neutral" id="kanban-lock" hidden style="margin-bottom:14px">
+          <span class="a-ic">🔒</span>
+          <div><b>Chế độ chỉ đọc</b>Vai trò hiện tại không có quyền sàng lọc (shortlist/reject) theo ma trận RBAC — thẻ không kéo được. Quyền này chỉ thuộc Recruiter phụ trách JD (BR-21).</div>
+        </div>
+
+        <div class="kanban" id="kanban"></div>
+      </section>
+
+      <!-- ============ SCR-04 — Candidate Profile & Timeline ============ -->
+      <section class="screen in-shell" id="scr-04" aria-labelledby="h-scr04">
+        <div class="page-head">
+          <div class="grow">
+            <span class="scr-tag">SCR-04 · UC-02, UC-03 (xem), UC-04</span>
+            <h1 id="h-scr04">Hoàng Thị Mai Chi</h1>
+            <p>Ứng tuyển JD-01 Senior Backend Engineer (Java) · Nguồn <span class="mono">LINKEDIN</span> · 6 năm kinh nghiệm · mai.chi.hoang@gmail.com</p>
+          </div>
+          <div class="row-tight">
+            <span class="chip chip-info" id="cand-status">SCREENING</span>
+            <button class="btn btn-sm" type="button" data-roles="RECRUITER" onclick="toast('Đã đánh dấu Talent Pool — UC-02 A4.1')">Talent pool</button>
+            <button class="btn btn-sm btn-primary" type="button" data-roles="RECRUITER" onclick="openSchedule()">Xếp lịch phỏng vấn</button>
+          </div>
+        </div>
+
+        <div class="grid g-side">
+          <div class="stack">
+            <div class="card">
+              <div class="card-head"><h2>Hồ sơ &amp; CV</h2><span class="chip chip-plain chip-neutral">attachments · v2</span></div>
+              <div class="card-body">
+                <div id="cv-open">
+                  <div class="grid g-2" style="gap:10px 20px">
+                    <div><div class="tiny dim">Vị trí hiện tại</div><div>Senior Backend Engineer — FPT Software</div></div>
+                    <div><div class="tiny dim">Kỹ năng chính</div><div>Java 17, Spring Boot, PostgreSQL, Kafka</div></div>
+                    <div><div class="tiny dim">Mức lương mong muốn</div><div>52.000.000 VND</div></div>
+                    <div><div class="tiny dim">Thời gian có thể onboard</div><div>01/09/2026</div></div>
+                  </div>
+                  <div class="sep"></div>
+                  <div class="row">
+                    <button class="btn btn-sm" type="button" onclick="toast('Đã tạo signed URL hết hạn 10 phút và ghi audit log tải CV (NFR-12)')">⤓ Tải CV (PDF, 2,4 MB)</button>
+                    <span class="tiny dim">Link tải là presigned URL hết hạn 10 phút, mỗi lượt tải đều được ghi audit (NFR-12).</span>
+                  </div>
+                </div>
+                <div id="cv-blocked" hidden>
+                  <div class="blocked">
+                    <span class="bl-ic" aria-hidden="true">🔒</span>
+                    <b>Bị chặn theo phạm vi dữ liệu (BR-20)</b>
+                    <p class="tiny" style="margin-top:4px">Vai trò hiện tại chỉ được xem <b>packet của buổi phỏng vấn được giao</b>, không xem được CV đầy đủ, mức lương mong muốn và lịch sử ứng tuyển. Quy tắc được kiểm tra ở tầng service chứ không chỉ ẩn nút trên giao diện (ADR-10, NFR-05).</p>
+                  </div>
+                  <div class="sep"></div>
+                  <div class="tiny dim">Packet được chia sẻ cho vòng Technical Round 1: tóm tắt kinh nghiệm, kỹ năng chính, câu hỏi gợi ý.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h2>Kết quả phỏng vấn theo vòng</h2></div>
+              <div class="tbl-wrap">
+                <table class="tbl">
+                  <thead><tr><th>Vòng</th><th>Interviewer</th><th>Thời gian</th><th class="right">Điểm TB</th><th>Kết luận</th><th>Trạng thái</th></tr></thead>
+                  <tbody>
+                    <tr><td>R1 — Technical Round 1</td><td>Vũ Ngọc Lan</td><td>14/08/2026 14:00</td><td class="right mono">4,20</td><td><span class="chip chip-good">HIRE</span></td><td class="tiny dim">Đã khoá</td></tr>
+                    <tr><td>R2 — System Design</td><td>Trần Quốc Bảo</td><td>20/08/2026 10:30</td><td class="right mono">—</td><td><span class="chip chip-neutral">Chưa có</span></td><td class="tiny dim">Đã lên lịch</td></tr>
+                    <tr><td>R3 — Culture Fit</td><td>Lê Thu Hà</td><td>—</td><td class="right mono">—</td><td><span class="chip chip-neutral">Chưa có</span></td><td class="tiny dim">Chưa xếp lịch</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>Dòng thời gian</h2><span class="chip chip-plain chip-neutral">audit_logs</span></div>
+            <div class="card-body">
+              <div class="tl">
+                <div class="tl-item"><div class="t-time">15/08/2026 15:05</div><div class="t-title">Feedback R1 được khoá</div><div class="t-desc">Hết cửa sổ sửa 24h — FeedbackService.</div></div>
+                <div class="tl-item is-past"><div class="t-time">14/08/2026 15:05</div><div class="t-title">Vũ Ngọc Lan submit scorecard</div><div class="t-desc">Điểm trung bình 4,20 · kết luận HIRE.</div></div>
+                <div class="tl-item is-past"><div class="t-time">14/08/2026 14:00</div><div class="t-title">Phỏng vấn R1 diễn ra</div><div class="t-desc">Interview chuyển <span class="mono">COMPLETED</span> (STATE-02).</div></div>
+                <div class="tl-item is-past"><div class="t-time">12/08/2026 09:12</div><div class="t-title">Ứng viên xác nhận lịch</div><div class="t-desc">Xác nhận sau 3 giờ 40 phút — trong hạn 24h (BR-05).</div></div>
+                <div class="tl-item is-past"><div class="t-time">12/08/2026 05:32</div><div class="t-title">Gửi thư mời phỏng vấn</div><div class="t-desc">Template <span class="mono">INTERVIEW_INVITE_VI</span> đã duyệt (BR-12).</div></div>
+                <div class="tl-item is-past"><div class="t-time">11/08/2026 16:20</div><div class="t-title">Chuyển sang SCREENING</div><div class="t-desc">Recruiter Nguyễn Minh Anh nhận sàng lọc.</div></div>
+                <div class="tl-item is-past"><div class="t-time">10/08/2026 08:47</div><div class="t-title">Nộp hồ sơ</div><div class="t-desc">Nguồn <span class="mono">REFERRAL</span> · Application <span class="mono">APP-1042</span>.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SCR-06 — Scorecard ============ -->
+      <section class="screen in-shell" id="scr-06" aria-labelledby="h-scr06">
+        <div class="page-head">
+          <div class="grow">
+            <span class="scr-tag">SCR-06 · UC-03</span>
+            <h1 id="h-scr06">Scorecard — Technical Round 1</h1>
+            <p>Ứng viên Hoàng Thị Mai Chi · JD-01 Senior Backend Engineer (Java) · Buổi phỏng vấn 14/08/2026 14:00–15:00 · Interviewer Vũ Ngọc Lan</p>
+          </div>
+          <div class="row-tight">
+            <span class="chip chip-warn" id="sc-deadline">Hạn submit 16/08/2026 14:00 (48h — BR-06)</span>
+          </div>
+        </div>
+
+        <div class="alert alert-neutral" id="sc-ro" hidden style="margin-bottom:14px">
+          <span class="a-ic">🔒</span>
+          <div><b>Chế độ chỉ đọc</b>Chỉ Interviewer được giao buổi phỏng vấn mới nhập được scorecard của chính mình. Recruiter, Hiring Manager và Head of HR chỉ được xem kết quả (RBAC — BR-21).</div>
+        </div>
+
+        <div class="grid g-side">
+          <div class="card">
+            <div class="card-head"><h2>Chấm 5 tiêu chí</h2><span class="chip chip-plain chip-neutral">scorecard_templates · v3</span></div>
+            <div class="card-body">
+              <form id="sc-form" novalidate>
+                <div id="sc-criteria"></div>
+                <div class="sep"></div>
+                <div class="field">
+                  <label for="sc-verdict">Kết luận vòng phỏng vấn</label>
+                  <select id="sc-verdict">
+                    <option value="">— Chọn kết luận —</option>
+                    <option value="STRONG_HIRE">Rất nên tuyển</option>
+                    <option value="HIRE" selected>Nên tuyển</option>
+                    <option value="NO_HIRE">Không nên tuyển</option>
+                    <option value="STRONG_NO_HIRE">Chắc chắn không tuyển</option>
+                  </select>
+                  <span class="hint">Vòng có từ 2 người phỏng vấn trở lên cần ít nhất 50% kết luận từ "Nên tuyển" trở lên mới đạt (BR-07).</span>
+                </div>
+                <div class="alert alert-warn" id="sc-guard">
+                  <span class="a-ic">✎</span>
+                  <div><b>Chưa đủ điều kiện submit</b><span id="sc-guard-text">Mỗi tiêu chí phải có điểm và nhận xét bằng lời (BR-15).</span></div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="card">
+              <div class="card-head"><h2>Tổng kết</h2></div>
+              <div class="card-body">
+                <div class="avg-box"><span class="av mono" id="sc-avg">—</span><span class="muted">/ 5,00 điểm trung bình</span></div>
+                <p class="tiny dim" style="margin-top:2px">Điểm trung bình được tính lại theo thời gian thực; giá trị chốt được cache vào <span class="mono">feedbacks.total_score</span>.</p>
+                <div class="sep"></div>
+                <ul id="sc-summary" class="stack" style="gap:6px"></ul>
+                <div class="sep"></div>
+                <button class="btn btn-primary" type="button" id="sc-submit" disabled style="width:100%;justify-content:center">Submit feedback</button>
+                <p class="tiny dim" style="margin-top:8px">Sau khi submit, feedback còn sửa được trong 24h (UC-03 A5.1); quá hạn hệ thống khoá vĩnh viễn và ghi version vào audit log.</p>
+              </div>
+            </div>
+
+            <div class="card" id="sc-locked" hidden>
+              <div class="card-head"><h2>Feedback đã submit</h2><span class="chip chip-good">Đã ghi nhận</span></div>
+              <div class="card-body">
+                <div class="alert alert-good" style="margin-bottom:12px">
+                  <span class="a-ic">✓</span>
+                  <div><b>Đã lưu và thông báo tới Recruiter + Hiring Manager</b>Trạng thái hiện tại: chỉ đọc.<br><b style="margin-top:6px">Khoá sau 24h — 15/08/2026 15:05</b></div>
+                </div>
+                <button class="btn btn-sm" type="button" id="sc-reset">Đặt lại để trình diễn tiếp</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SCR-07 — Offer Wizard 4 bước ============ -->
+      <section class="screen in-shell" id="scr-07" aria-labelledby="h-scr07">
+        <div class="page-head">
+          <div class="grow">
+            <span class="scr-tag">SCR-07 · UC-04</span>
+            <h1 id="h-scr07">Tạo offer — Hoàng Thị Mai Chi</h1>
+            <p>JD-01 Senior Backend Engineer (Java) · Band 35.000.000 – 48.000.000 VND · Đã pass R1 với kết luận HIRE</p>
+          </div>
+          <div class="row-tight"><span class="chip chip-neutral" id="ow-status">Bản nháp</span></div>
+        </div>
+
+        <div class="steps" id="ow-steps">
+          <div class="step is-on" data-step="1"><div class="step-bar"></div><span class="step-t">1 · Thông tin cơ bản</span></div>
+          <div class="step" data-step="2"><div class="step-bar"></div><span class="step-t">2 · Lương &amp; phúc lợi</span></div>
+          <div class="step" data-step="3"><div class="step-bar"></div><span class="step-t">3 · Xem lại</span></div>
+          <div class="step" data-step="4"><div class="step-bar"></div><span class="step-t">4 · Gửi duyệt</span></div>
+        </div>
+
+        <div class="grid g-side">
+          <div class="card">
+            <div class="card-body">
+
+              <div class="wstep is-on" data-w="1">
+                <h2 style="margin-bottom:12px">Thông tin cơ bản</h2>
+                <div class="grid g-2" style="gap:0 16px">
+                  <div class="field"><label for="ow-cand">Ứng viên</label><input id="ow-cand" type="text" value="Hoàng Thị Mai Chi — APP-1042" readonly></div>
+                  <div class="field"><label for="ow-jd">Vị trí</label><input id="ow-jd" type="text" value="JD-01 Senior Backend Engineer (Java)" readonly></div>
+                  <div class="field"><label for="ow-start">Ngày bắt đầu dự kiến</label><input id="ow-start" type="date" value="2026-09-01"></div>
+                  <div class="field"><label for="ow-deadline">Hạn phản hồi của ứng viên</label><input id="ow-deadline" type="date" value="2026-08-25"><span class="hint">Tối đa 7 ngày làm việc kể từ lúc gửi (BR-09); quá hạn job nền chuyển offer sang <span class="mono">EXPIRED</span>.</span></div>
+                </div>
+                <div class="field"><label for="ow-title">Chức danh trên thư offer</label><input id="ow-title" type="text" value="Senior Backend Engineer"></div>
+              </div>
+
+              <div class="wstep" data-w="2">
+                <h2 style="margin-bottom:12px">Lương &amp; phúc lợi</h2>
+                <div class="field">
+                  <label for="ow-salary">Lương gross tháng (VND)</label>
+                  <input id="ow-salary" type="number" min="0" step="100000" value="51840000">
+                  <span class="hint">Band của JD-01: <b>35.000.000 – 48.000.000 VND</b> — giá trị band được chụp lại vào offer tại thời điểm tạo (<span class="mono">offers.band_snapshot_min/max</span> — đề xuất P1 gửi C, chưa có trong schema v1.2).</span>
+                </div>
+                <div class="alert" id="ow-band" style="margin-bottom:14px"><span class="a-ic">≡</span><div><b id="ow-band-title">—</b><span id="ow-band-text">—</span></div></div>
+                <div class="field"><label for="ow-bonus">Phúc lợi kèm theo</label><textarea id="ow-bonus">Thưởng hiệu suất tối đa 2 tháng lương; bảo hiểm sức khoẻ mở rộng cho người thân; 15 ngày phép năm; ngân sách đào tạo 20.000.000 VND/năm.</textarea></div>
+              </div>
+
+              <div class="wstep" data-w="3">
+                <h2 style="margin-bottom:12px">Xem lại trước khi gửi duyệt</h2>
+                <div class="tbl-wrap"><table class="tbl" id="ow-review"></table></div>
+                <div class="alert alert-info" style="margin-top:14px"><span class="a-ic">i</span><div><b>Kiểm tra trước khi khoá bản nháp</b>Sau khi gửi duyệt, mọi thay đổi phải đi qua hành động "Yêu cầu chỉnh sửa" của cấp duyệt và làm tăng <span class="mono">attempt_no</span> của offer.</div></div>
+              </div>
+
+              <div class="wstep" data-w="4">
+                <h2 style="margin-bottom:12px">Gửi duyệt</h2>
+                <div id="ow-send-form">
+                  <div class="field"><label for="ow-note">Ghi chú gửi cấp duyệt</label><textarea id="ow-note" data-base="Ứng viên có 6 năm kinh nghiệm Java/Spring, pass R1 với 4,20 điểm."></textarea></div>
+                  <div class="alert alert-warn"><span class="a-ic">⚑</span><div><b>Chuỗi duyệt áp dụng</b><span id="ow-chain-text">—</span></div></div>
+                  <button class="btn btn-primary" type="button" id="ow-send" style="margin-top:14px">Gửi duyệt offer</button>
+                </div>
+                <div id="ow-sent" hidden>
+                  <div class="alert alert-good"><span class="a-ic">✓</span><div><b>Offer OFF-318 đã chuyển sang trạng thái Chờ duyệt</b>Đã gửi tới cấp duyệt 1 — Trần Quốc Bảo (Hiring Manager). Bản ghi <span class="mono">offer_approvals</span> được tạo với <span class="mono">attempt_no = 1</span>; thông báo đẩy qua outbox nên không mất khi gateway lỗi (ADR-06).</div></div>
+                  <div class="row" style="margin-top:14px">
+                    <button class="btn" type="button" onclick="setRole('HEAD_OF_HR'); showScreen('scr-08')">Xem hộp duyệt offer với vai trò Head of HR</button>
+                    <button class="btn btn-ghost" type="button" id="ow-restart">Tạo offer khác</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sep"></div>
+              <div class="row">
+                <button class="btn" type="button" id="ow-prev" disabled>← Quay lại</button>
+                <button class="btn btn-primary" type="button" id="ow-next">Tiếp tục →</button>
+                <span class="spacer"></span>
+                <span class="tiny dim" id="ow-step-label">Bước 1 / 4</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="card">
+              <div class="card-head"><h2>Chuỗi duyệt theo BR-08</h2><span class="chip chip-plain chip-neutral" id="ow-levels">—</span></div>
+              <div class="card-body">
+                <div class="chain" id="ow-chain"></div>
+                <div class="sep"></div>
+                <p class="tiny dim">Số cấp duyệt được <span class="mono">ApprovalWorkflow</span> tính lại mỗi khi mức lương thay đổi: trong band → 1 cấp; vượt band ≤10% → 2 cấp; vượt band &gt;10% → 3 cấp.</p>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-head"><h2>Thử nhanh khi trình diễn</h2></div>
+              <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn btn-sm" type="button" data-salary="45000000">45.000.000 — trong band → 1 cấp</button>
+                <button class="btn btn-sm" type="button" data-salary="51840000">51.840.000 — vượt 8% → 2 cấp</button>
+                <button class="btn btn-sm" type="button" data-salary="56000000">56.000.000 — vượt 16,7% → 3 cấp</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SCR-08 — Offer Approval Inbox ============ -->
+      <section class="screen in-shell" id="scr-08" aria-labelledby="h-scr08">
+        <div class="page-head">
+          <div class="grow">
+            <span class="scr-tag">SCR-08 · UC-04</span>
+            <h1 id="h-scr08">Hộp duyệt offer</h1>
+            <p>Danh sách offer đang chờ quyết định của các cấp duyệt Hiring Manager, Head of HR và Finance.</p>
+          </div>
+          <div class="row-tight"><span class="chip chip-warn" id="inbox-count">3 offer chờ duyệt</span></div>
+        </div>
+
+        <div class="grid g-inbox">
+          <div class="card">
+            <div class="card-head"><h2>Chờ quyết định</h2></div>
+            <div class="card-body" style="padding:9px;display:flex;flex-direction:column;gap:8px" id="inbox-list"></div>
+          </div>
+          <div class="card" id="inbox-detail"></div>
+        </div>
+      </section>
+
+      <!-- ============ SCR-10 — Reports Dashboard ============ -->
+      <section class="screen in-shell" id="scr-10" aria-labelledby="h-scr10">
+        <div class="page-head">
+          <div class="grow">
+            <span class="scr-tag">SCR-10 · UC-05</span>
+            <h1 id="h-scr10">Báo cáo tuyển dụng</h1>
+            <p>Khoảng thời gian 01/03/2026 – 16/08/2026 · Toàn công ty · Nguồn dữ liệu: read model đọc từ replica, không chạm cơ sở dữ liệu giao dịch (ADR-07, NFR-10).</p>
+          </div>
+          <div class="row-tight">
+            <button class="btn btn-sm" type="button" id="btn-rp-empty">Xem trạng thái rỗng</button>
+            <button class="btn btn-sm" type="button" id="btn-rp-table">Hiện bảng số liệu</button>
+            <button class="btn btn-sm" type="button" onclick="toast('Đã xếp hàng job export CSV — ReportingService')">⤓ Export CSV</button>
+          </div>
+        </div>
+
+        <div class="alert alert-neutral" style="margin-bottom:14px">
+          <span class="a-ic">⟳</span>
+          <div><b>Dữ liệu cập nhật lúc 16/08/2026 09:15 (độ trễ 12 phút)</b>Read model được <span class="mono">SchedulerWorker</span> làm mới mỗi 15 phút; độ trễ tối đa cam kết là 15 phút (NFR-10).</div>
+        </div>
+
+        <div id="rp-full">
+          <div class="grid g-2">
+            <div class="card chart-card">
+              <div class="card-head"><h2>Phễu tuyển dụng</h2><span class="chip chip-plain chip-neutral">rm_funnel_daily</span></div>
+              <div class="card-body"><div id="ch-funnel"></div><p class="chart-note">Tỷ lệ chuyển đổi tính trên số hồ sơ của bước liền trước.</p><div class="tbl-wrap rp-table" hidden><table class="tbl" id="tb-funnel"></table></div></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-head"><h2>Time-to-hire theo phòng ban</h2><span class="chip chip-plain chip-neutral">rm_time_to_hire</span></div>
+              <div class="card-body"><div id="ch-tth"></div><p class="chart-note">Số ngày trung bình từ lúc nhận hồ sơ đến khi ứng viên nhận offer. Đường đứt nét là mục tiêu 30 ngày.</p><div class="tbl-wrap rp-table" hidden><table class="tbl" id="tb-tth"></table></div></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-head"><h2>Hiệu quả nguồn tuyển</h2><span class="chip chip-plain chip-neutral">rm_source_effectiveness</span></div>
+              <div class="card-body"><div id="ch-src"></div><p class="chart-note">Số ứng viên được tuyển theo từng giá trị của <span class="mono">candidate_source</span>; nhãn phụ là tỷ lệ hồ sơ chuyển thành hire.</p><div class="tbl-wrap rp-table" hidden><table class="tbl" id="tb-src"></table></div></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-head"><h2>Tỷ lệ đạt SLA phản hồi</h2><span class="chip chip-plain chip-neutral">rm_sla_compliance</span></div>
+              <div class="card-body"><div id="ch-sla"></div><p class="chart-note">Phần trăm ứng viên nhận phản hồi đúng hạn theo tháng. Đường đứt nét là ngưỡng cam kết 90%.</p><div class="tbl-wrap rp-table" hidden><table class="tbl" id="tb-sla"></table></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="rp-empty" hidden>
+          <div class="card"><div class="card-body">
+            <div class="empty-state">
+              <span class="es-ic" aria-hidden="true">◷</span>
+              <b>Chưa đủ dữ liệu để dựng báo cáo</b>
+              <p class="tiny">Trạng thái rỗng của SCR-10: theo precondition của UC-05, dashboard cần tối thiểu 30 ngày dữ liệu. Khi read model chưa đủ mẫu, hệ thống hiển thị thông báo thay vì vẽ biểu đồ rỗng gây hiểu nhầm.</p>
+              <button class="btn btn-primary" type="button" id="btn-rp-full">Nạp dữ liệu mẫu</button>
+            </div>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- ============ SCR-11 — Admin: Users & Departments ============ -->
+      <section class="screen in-shell" id="scr-11" aria-labelledby="h-scr11">
+        <div class="page-head">
+          <div class="grow">
+            <span class="scr-tag">SCR-11 · F09 (ngoài 5 UC trọng tâm)</span>
+            <h1 id="h-scr11">Quản trị người dùng &amp; phòng ban</h1>
+            <p>Chức năng dành riêng cho HR Admin: tạo tài khoản, gán vai trò, giới hạn phạm vi phòng ban và tra cứu nhật ký kiểm toán.</p>
+          </div>
+          <div class="row-tight"><button class="btn btn-sm btn-primary" type="button" onclick="toast('Đã gửi lời mời kích hoạt tài khoản qua IdentityProvider')">+ Thêm người dùng</button></div>
+        </div>
+
+        <div class="grid g-side">
+          <div class="stack">
+            <div class="card">
+              <div class="card-head"><h2>Người dùng nội bộ</h2><span class="chip chip-plain chip-neutral">bảng users</span></div>
+              <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Phòng ban</th><th>Trạng thái</th></tr></thead><tbody id="admin-users"></tbody></table></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><h2>Nhật ký kiểm toán gần nhất</h2><span class="chip chip-plain chip-neutral">audit_logs</span></div>
+              <div class="tbl-wrap"><table class="tbl">
+                <thead><tr><th>Thời điểm</th><th>Người thực hiện</th><th>Hành động</th><th>Đối tượng</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono tiny">16/08/2026 09:02</td><td>Nguyễn Minh Anh</td><td>INTERVIEW_CONFLICT_OVERRIDE</td><td class="mono tiny">interview:INT-2088</td></tr>
+                  <tr><td class="mono tiny">15/08/2026 10:12</td><td>Trần Quốc Bảo</td><td>APPROVE_OFFER_LEVEL_1</td><td class="mono tiny">offer:OFF-318</td></tr>
+                  <tr><td class="mono tiny">14/08/2026 15:05</td><td>Vũ Ngọc Lan</td><td>SUBMIT_FEEDBACK</td><td class="mono tiny">feedback:FB-2026-0207</td></tr>
+                  <tr><td class="mono tiny">14/08/2026 11:41</td><td>Đỗ Hải Yến</td><td>DOWNLOAD_CV</td><td class="mono tiny">attachment:AT-2026-0455</td></tr>
+                </tbody>
+              </table></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>Phân quyền</h2></div>
+            <div class="card-body">
+              <div class="field"><label for="ad-user">Người dùng</label><select id="ad-user"></select></div>
+              <div class="field"><label for="ad-role">Vai trò</label><select id="ad-role"></select></div>
+              <div class="field"><label for="ad-dept">Phạm vi phòng ban</label>
+                <select id="ad-dept">
+                  <option>Khối Nhân sự</option><option>Khối Công nghệ</option><option>Khối Dữ liệu</option><option>Khối Tài chính</option><option>Toàn công ty</option>
+                </select>
+                <span class="hint">Phạm vi phòng ban là lớp kiểm tra thứ hai sau vai trò — cùng vai trò nhưng khác phòng ban vẫn bị từ chối (BR-20).</span>
+              </div>
+              <div class="field"><label>Quyền suy ra từ vai trò</label><ul id="ad-perms" class="stack" style="gap:6px"></ul></div>
+              <button class="btn btn-primary" type="button" id="ad-save" style="width:100%;justify-content:center">Lưu phân quyền</button>
+              <p class="tiny dim" style="margin-top:8px">Mọi thay đổi phân quyền đều sinh một dòng <span class="mono">audit_logs</span> kèm giá trị trước và sau (NFR-06).</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ============ SCR-01 — Đăng nhập / SSO redirect ============ -->
+<section class="screen screen--plain is-active" id="scr-01" aria-labelledby="h-scr01">
+  <div class="login">
+    <div class="login-card">
+      <div class="row" style="gap:10px;margin-bottom:16px">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="var(--accent)" aria-hidden="true"><use href="#ic-logo"/></svg>
+        <div>
+          <div class="brand-name" style="font-size:17px">ATS mini</div>
+          <div class="brand-sub">Công ty CP Công nghệ Vạn Xuân (VXTech)</div>
+        </div>
+      </div>
+      <span class="scr-tag">SCR-01 · Tiền đề mọi UC · NFR-04</span>
+      <h1 id="h-scr01" style="margin:6px 0 4px">Đăng nhập hệ thống tuyển dụng</h1>
+      <p class="muted tiny" style="margin-bottom:18px">Hệ thống dùng đăng nhập một lần (SSO) qua OIDC với Google Workspace nội bộ. Chỉ tài khoản thuộc miền <b>@vxtech.vn</b> và đang ở trạng thái active mới được cấp phiên làm việc.</p>
+
+      <div class="field">
+        <label for="lg-email">Tài khoản công ty</label>
+        <input id="lg-email" type="email" value="minh.anh.nguyen@vxtech.vn" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="lg-role">Đăng nhập với vai trò (chỉ dùng cho prototype)</label>
+        <select id="lg-role"></select>
+        <span class="hint">Trong hệ thống thật, vai trò được lấy từ claim của IdentityProvider, người dùng không tự chọn.</span>
+      </div>
+
+      <button class="btn btn-primary" type="button" id="lg-go" style="width:100%;justify-content:center">Tiếp tục với Google Workspace</button>
+
+      <div class="alert alert-danger" id="lg-error" hidden style="margin-top:14px">
+        <span class="a-ic">✕</span>
+        <div><b>Tài khoản không hoạt động</b>Tài khoản <span class="mono">cuu.nhanvien@vxtech.vn</span> đã bị vô hiệu hoá trong <span class="mono">users.is_active = false</span>. Phiên làm việc bị từ chối ở tầng <span class="mono">AuthService</span> và lần thử được ghi vào audit log.</div>
+      </div>
+
+      <div class="sep"></div>
+      <div class="row" style="justify-content:space-between">
+        <button class="btn btn-ghost btn-sm" type="button" id="lg-fail">Mô phỏng lỗi tài khoản không active</button>
+        <button class="btn btn-ghost btn-sm" type="button" onclick="showScreen('scr-09')">Vào cổng ứng viên →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCR-09 — Candidate Portal (khung riêng) ============ -->
+<section class="screen screen--plain" id="scr-09" aria-labelledby="h-scr09">
+  <div class="portal">
+    <div class="portal-top">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--accent)" aria-hidden="true"><use href="#ic-logo"/></svg>
+      <div>
+        <div class="brand-name" style="font-size:14px">Cổng ứng viên VXTech</div>
+        <div class="brand-sub">Hoàng Thị Mai Chi · mai.chi.hoang@gmail.com</div>
+      </div>
+      <span class="spacer"></span>
+      <button class="btn btn-sm btn-ghost" type="button" onclick="showScreen('scr-01')">Thoát</button>
+    </div>
+
+    <div class="portal-wrap">
+      <div class="portal-banner">Bạn đang truy cập bằng liên kết mời, hết hạn 23/08/2026. Liên kết dùng cho một mình bạn; các thao tác nhạy cảm sẽ yêu cầu mở lại liên kết mới nhất trong email.</div>
+
+      <div>
+        <span class="scr-tag">SCR-09 · UC-01, UC-04, UC-06</span>
+        <h1 id="h-scr09">Tình trạng hồ sơ của bạn</h1>
+        <p class="muted tiny" style="margin-top:3px">Vị trí Senior Backend Engineer (Java) — Công ty CP Công nghệ Vạn Xuân. Mã hồ sơ APP-1042.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Tiến trình tuyển dụng</h2><span class="chip chip-info" id="pt-status">Đã nhận offer</span></div>
+        <div class="card-body">
+          <div class="tl">
+            <div class="tl-item"><div class="t-time">15/08/2026</div><div class="t-title">Bạn nhận được thư mời làm việc</div><div class="t-desc">Vui lòng phản hồi trước 25/08/2026.</div></div>
+            <div class="tl-item is-past"><div class="t-time">14/08/2026</div><div class="t-title">Hoàn thành vòng phỏng vấn kỹ thuật 1</div><div class="t-desc">Cảm ơn bạn đã dành thời gian trao đổi.</div></div>
+            <div class="tl-item is-past"><div class="t-time">12/08/2026</div><div class="t-title">Bạn đã xác nhận lịch phỏng vấn</div><div class="t-desc">Xác nhận trong thời hạn 24 giờ.</div></div>
+            <div class="tl-item is-past"><div class="t-time">10/08/2026</div><div class="t-title">Hồ sơ được tiếp nhận</div><div class="t-desc">Nguồn ứng tuyển: LinkedIn.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Lịch phỏng vấn cần xác nhận</h2><span class="chip chip-warn" id="pt-sched-chip">Còn 18 giờ để xác nhận</span></div>
+        <div class="card-body">
+          <div id="pt-sched">
+            <div class="grid g-2" style="gap:10px 20px">
+              <div><div class="tiny dim">Vòng phỏng vấn</div><div><b>System Design (vòng 2)</b></div></div>
+              <div><div class="tiny dim">Thời gian</div><div><b>20/08/2026 · 10:30 – 11:30</b></div></div>
+              <div><div class="tiny dim">Hình thức</div><div>Google Meet — liên kết gửi kèm email</div></div>
+              <div><div class="tiny dim">Người phỏng vấn</div><div>Trần Quốc Bảo — Engineering Manager</div></div>
+            </div>
+            <div class="sep"></div>
+            <div class="row">
+              <button class="btn btn-primary" type="button" id="pt-confirm">Xác nhận tham dự</button>
+              <button class="btn" type="button" id="pt-reschedule">Đề nghị đổi lịch</button>
+              <span class="tiny dim">Nếu bạn không phản hồi trong 24 giờ, hệ thống sẽ tự chuyển hồ sơ sang trạng thái chờ xếp lại lịch.</span>
+            </div>
+          </div>
+          <div class="alert alert-good" id="pt-sched-done" hidden><span class="a-ic">✓</span><div><b>Bạn đã xác nhận tham dự</b>Lời mời lịch đã được gửi vào email của bạn; nhà tuyển dụng cũng nhận được thông báo ngay lập tức.</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Thư mời làm việc</h2><span class="chip chip-info">Hạn phản hồi 25/08/2026</span></div>
+        <div class="card-body">
+          <div class="grid g-2" style="gap:10px 20px">
+            <div><div class="tiny dim">Vị trí</div><div><b>Senior Backend Engineer</b></div></div>
+            <div><div class="tiny dim">Lương gross tháng</div><div><b>51.840.000 VND</b></div></div>
+            <div><div class="tiny dim">Ngày bắt đầu dự kiến</div><div>01/09/2026</div></div>
+            <div><div class="tiny dim">Phúc lợi</div><div>Thưởng tối đa 2 tháng, bảo hiểm mở rộng, 15 ngày phép</div></div>
+          </div>
+          <div class="sep"></div>
+          <div id="pt-offer-actions" class="row">
+            <button class="btn btn-good" type="button" id="pt-accept">Đồng ý nhận việc</button>
+            <button class="btn btn-danger" type="button" id="pt-decline">Từ chối</button>
+            <button class="btn btn-warn" type="button" id="pt-counter">Đề nghị mức khác</button>
+          </div>
+          <div id="pt-counter-box" hidden style="margin-top:14px">
+            <div class="field">
+              <label for="pt-counter-amount">Mức lương mong muốn (VND)</label>
+              <input id="pt-counter-amount" type="number" min="0" step="100000" value="56000000">
+            </div>
+            <div class="field">
+              <label for="pt-counter-note">Lý do đề nghị</label>
+              <textarea id="pt-counter-note" placeholder="Ví dụ: mức đang nhận hiện tại, offer song song, phạm vi công việc mở rộng…"></textarea>
+            </div>
+            <div class="row">
+              <button class="btn btn-primary" type="button" id="pt-counter-send">Gửi đề nghị</button>
+              <button class="btn btn-ghost" type="button" id="pt-counter-cancel">Huỷ</button>
+            </div>
+          </div>
+          <div class="alert" id="pt-offer-result" hidden style="margin-top:14px"><span class="a-ic">✓</span><div><b id="pt-offer-result-t">—</b><span id="pt-offer-result-d">—</span></div></div>
+          <p class="tiny dim" style="margin-top:12px">Thao tác đồng ý nhận việc yêu cầu liên kết dùng-một-lần; sau khi bấm, liên kết cũ trong email sẽ hết hiệu lực.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCR-05 — Schedule Interview (modal) ============ -->
+<section class="screen modal-screen" id="scr-05" aria-labelledby="h-scr05" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="grow" style="flex:1">
+        <span class="scr-tag">SCR-05 · UC-01 · BR-03</span>
+        <h1 id="h-scr05" style="font-size:17px">Xếp lịch phỏng vấn</h1>
+        <p class="tiny muted">Ứng viên Hoàng Thị Mai Chi · JD-01 Senior Backend Engineer (Java) · Vòng kế tiếp theo cấu hình JD: <b>R2 — System Design</b></p>
+      </div>
+      <button class="icon-btn" type="button" id="sch-close" aria-label="Đóng">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="field">
+        <label>Chọn người phỏng vấn (1–3 người, lọc theo kỹ năng và phòng ban)</label>
+        <div class="grid g-2" style="gap:8px" id="sch-interviewers"></div>
+      </div>
+
+      <div class="grid g-2" style="gap:0 16px">
+        <div class="field"><label for="sch-date">Ngày phỏng vấn</label><input id="sch-date" type="date" value="2026-08-20"></div>
+        <div class="field"><label for="sch-mode">Hình thức</label><select id="sch-mode"><option>Trực tuyến — Google Meet</option><option>Trực tiếp — Phòng họp Mekong</option></select></div>
+      </div>
+
+      <div class="field">
+        <label>Khung giờ đề xuất</label>
+        <div class="slot-list" id="sch-slots"></div>
+        <span class="hint">Quy tắc phát hiện trùng: <span class="mono">newStart &lt; existingEnd AND newEnd &gt; existingStart</span> — kiểm tra và ghi lịch nằm trong cùng một vùng khoá phân tán để hai Recruiter đặt song song không tạo được lịch trùng.</span>
+      </div>
+
+      <div class="alert alert-danger" id="sch-conflict" hidden>
+        <span class="a-ic">✕</span>
+        <div>
+          <b>Trùng lịch với buổi phỏng vấn đã có</b>
+          <span id="sch-conflict-text">—</span>
+          <div style="margin-top:9px"><b style="font-size:12px">3 khung giờ trống được gợi ý</b></div>
+          <div class="row-tight" id="sch-suggest" style="margin-top:6px"></div>
+        </div>
+      </div>
+
+      <div id="sch-override" hidden>
+        <div class="field">
+          <label for="sch-reason">Lý do override (bắt buộc)</label>
+          <textarea id="sch-reason" placeholder="Ví dụ: ứng viên chỉ rảnh khung này, người phỏng vấn đã đồng ý dời buổi nội bộ…"></textarea>
+          <span class="hint">Ép xếp lịch trùng chỉ được phép khi có lý do dài tối thiểu 20 ký tự; lý do và người thực hiện được ghi vào <span class="mono">audit_logs</span> (BR-26).</span>
+        </div>
+        <label class="check" for="sch-commit" style="margin-bottom:4px">
+          <input id="sch-commit" type="checkbox">
+          <span>Tôi chịu trách nhiệm về việc ép xếp lịch trùng này và đã thông báo cho người phỏng vấn liên quan.</span>
+        </label>
+      </div>
+
+      <div class="alert alert-good" id="sch-ok" hidden>
+        <span class="a-ic">✓</span>
+        <div><b>Khung giờ hợp lệ</b>Không phát hiện xung đột cho người phỏng vấn đã chọn. Sau khi xác nhận, hệ thống tạo <span class="mono">Interview (SCHEDULED)</span>, gửi thư mời cho ứng viên và người phỏng vấn, đồng thời đặt hạn xác nhận 24h (BR-05).</div>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <span class="tiny dim" id="sch-state">Chưa chọn khung giờ</span>
+      <span class="spacer"></span>
+      <button class="btn" type="button" id="sch-cancel">Huỷ</button>
+      <button class="btn btn-primary" type="button" id="sch-confirm" disabled>Xác nhận xếp lịch</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Toast / chú thích demo / thanh công cụ demo ============ -->
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<div class="annot" id="annot" hidden>
+  <div class="an-top"><span class="an-tag" id="an-tag">UC-02</span><span class="an-title" id="an-title">—</span></div>
+  <p id="an-note">—</p>
+</div>
+
+<div class="demobar" id="demobar">
+  <div class="db-head"><span aria-hidden="true">▶</span> Kịch bản demo</div>
+  <div class="db-step">Bước <b id="db-idx">0</b> / 6 — <span id="db-name">chưa chạy</span></div>
+  <div class="db-row">
+    <button class="btn btn-sm" type="button" id="db-prev">◀ Trước</button>
+    <button class="btn btn-sm" type="button" id="db-next">Sau ▶</button>
+  </div>
+  <button class="btn btn-sm btn-primary" type="button" id="db-run" style="justify-content:center">Chạy kịch bản demo</button>
+  <button class="btn btn-sm btn-ghost" type="button" id="db-annot" style="justify-content:center">Tắt lớp phủ chú thích</button>
+</div>
+
+<script>
+/* ============================================================
+   1. DỮ LIỆU GIẢ — toàn bộ prototype đọc từ object này
+   ============================================================ */
+var DB = {
+  company: { name: 'Công ty CP Công nghệ Vạn Xuân (VXTech)', domain: '@vxtech.vn' },
+
+  roles: [
+    { id:'RECRUITER',      label:'Recruiter',              person:'Nguyễn Minh Anh', dept:'Khối Nhân sự',  ini:'NA', email:'minh.anh.nguyen@vxtech.vn' },
+    { id:'HIRING_MANAGER', label:'Hiring Manager',         person:'Trần Quốc Bảo',   dept:'Khối Công nghệ',ini:'TB', email:'quoc.bao.tran@vxtech.vn' },
+    { id:'INTERVIEWER',    label:'Interviewer',            person:'Vũ Ngọc Lan',     dept:'Khối Công nghệ',ini:'VL', email:'ngoc.lan.vu@vxtech.vn' },
+    { id:'HR_ADMIN',       label:'HR Admin',               person:'Đỗ Hải Yến',      dept:'Khối Nhân sự',  ini:'HY', email:'hai.yen.do@vxtech.vn' },
+    { id:'HEAD_OF_HR',     label:'Head of HR',             person:'Lê Thu Hà',       dept:'Khối Nhân sự',  ini:'LH', email:'thu.ha.le@vxtech.vn' },
+    { id:'FINANCE',        label:'Người duyệt Tài chính',  person:'Phạm Đức Duy',    dept:'Khối Tài chính',ini:'PD', email:'duc.duy.pham@vxtech.vn' }
+  ],
+
+  jds: [
+    { id:'JD-01', title:'Senior Backend Engineer (Java)', dept:'Khối Công nghệ', min:35000000, max:48000000, headcount:2, cv:42, iv:7, status:'OPEN' },
+    { id:'JD-02', title:'Data Engineer',                  dept:'Khối Dữ liệu',   min:28000000, max:40000000, headcount:1, cv:23, iv:3, status:'OPEN' },
+    { id:'JD-03', title:'AI Engineer',                    dept:'Khối Công nghệ', min:40000000, max:60000000, headcount:1, cv:11, iv:2, status:'DRAFT' }
+  ],
+
+  tasks: [
+    { t:'Sàng lọc 12 CV mới của JD-01',            s:'UC-02 · cũ nhất 3 ngày',            k:'warn' },
+    { t:'Xếp lịch R2 cho Hoàng Thị Mai Chi',       s:'UC-01 · pass R1 với 4,20 điểm',     k:'info' },
+    { t:'Nhắc feedback vòng 1 — Ngô Phương Thảo (JD-02)', s:'BR-06 · quá hạn 16/08/2026 10:00', k:'danger' },
+    { t:'Hoàn thiện offer cho Bùi Tuấn Kiệt',      s:'UC-04 · draft chưa gửi duyệt',      k:'neutral' }
+  ],
+
+  /* Transition hợp lệ giữa các cột kanban, rút từ STATE-01 của B (mục 3.4 Chương 3).
+     Cột "Kết thúc" gom REJECTED, TALENT_POOL, DECLINED, EXPIRED, HIRED, GHOSTED, ON_HOLD,
+     OFFER_REJECTED_INTERNALLY nên mọi cột đều có đường đi tới nó. */
+  allowed: {
+    NEW:           ['SCREENING', 'REJECTED'],
+    SCREENING:     ['SHORTLISTED', 'REJECTED'],
+    SHORTLISTED:   ['INTERVIEWING', 'REJECTED'],
+    INTERVIEWING:  ['OFFER_PENDING', 'REJECTED'],
+    OFFER_PENDING: ['OFFER_SENT', 'REJECTED'],
+    OFFER_SENT:    ['REJECTED'],
+    REJECTED:      []
+  },
+
+  /* Kanban của JD-01 — cột khớp application_status (kèm SHORTLISTED đề xuất X-02) */
+  columns: [
+    { id:'NEW',           label:'Mới nộp' },
+    { id:'SCREENING',     label:'Đang sàng lọc' },
+    { id:'SHORTLISTED',   label:'Đã shortlist' },
+    { id:'INTERVIEWING',  label:'Đang phỏng vấn' },
+    { id:'OFFER_PENDING', label:'Chờ duyệt offer' },
+    { id:'OFFER_SENT',    label:'Đã gửi offer' },
+    { id:'REJECTED',      label:'Kết thúc' }
+  ],
+  cards: [
+    { id:'APP-1061', name:'Đặng Khánh Linh',  src:'WEBSITE',    day:'16/08', col:'NEW',           note:'4 năm Java' },
+    { id:'APP-1060', name:'Trịnh Bá Long',    src:'EMAIL',      day:'15/08', col:'NEW',           note:'5 năm Golang' },
+    { id:'APP-1059', name:'Lý Gia Hân',       src:'LINKEDIN',   day:'15/08', col:'SHORTLISTED',   note:'Chờ xếp lịch R1' },
+    { id:'APP-1042', name:'Hoàng Thị Mai Chi',src:'REFERRAL',   day:'10/08', col:'SCREENING',     note:'6 năm Java/Spring' },
+    { id:'APP-1049', name:'Ngô Phương Thảo',  src:'WEBSITE',    day:'12/08', col:'SCREENING',     note:'5 năm Kotlin' },
+    { id:'APP-1045', name:'Bùi Tuấn Kiệt',    src:'LINKEDIN',   day:'08/08', col:'INTERVIEWING',  note:'Vòng 1/3 · 20/08 14:00' },
+    { id:'APP-1031', name:'Phan Anh Tuấn',    src:'HEADHUNTER', day:'04/08', col:'INTERVIEWING',  note:'Vòng 2/3 · System Design' },
+    { id:'APP-1028', name:'Vương Hải Đăng',   src:'LINKEDIN',   day:'02/08', col:'OFFER_PENDING', note:'Chờ cấp 1 duyệt' }
+  ],
+
+  /* SCR-05 — người phỏng vấn và khung giờ ngày 20/08/2026 */
+  interviewers: [
+    { id:'U05', name:'Vũ Ngọc Lan',   title:'Senior Backend · Khối Công nghệ', busy:['14:00-15:00'] },
+    { id:'U02', name:'Trần Quốc Bảo', title:'Engineering Manager · Khối Công nghệ', busy:[] },
+    { id:'U07', name:'Đinh Quang Huy', title:'Tech Lead · Khối Công nghệ', busy:[] },
+    { id:'U08', name:'Hà Kiều Trang', title:'Senior Backend · Khối Dữ liệu', busy:[] }
+  ],
+  slots: [
+    { id:'s1', time:'09:00 – 10:00', key:'09:00-10:00' },
+    { id:'s2', time:'10:30 – 11:30', key:'10:30-11:30' },
+    { id:'s3', time:'14:00 – 15:00', key:'14:00-15:00' },
+    { id:'s4', time:'16:00 – 17:00', key:'16:00-17:00' }
+  ],
+  suggested: ['20/08 · 09:00 – 10:00', '20/08 · 16:00 – 17:00', '20/08 · 10:30 – 11:30'],
+
+  /* SCR-06 — 5 tiêu chí của scorecard_templates v3 */
+  criteria: [
+    { k:'technical',     label:'Năng lực kỹ thuật',   hint:'Chiều sâu Java/Spring, thiết kế API, tối ưu truy vấn' },
+    { k:'problemSolving',label:'Giải quyết vấn đề',   hint:'Cách tiếp cận bài toán, xử lý ràng buộc, đánh đổi' },
+    { k:'communication', label:'Giao tiếp',           hint:'Diễn đạt ý tưởng, phản hồi câu hỏi, làm rõ yêu cầu' },
+    { k:'cultureFit',    label:'Phù hợp văn hoá',     hint:'Hợp tác, minh bạch, trách nhiệm với kết quả nhóm' },
+    { k:'growth',        label:'Tinh thần cầu tiến',  hint:'Học từ sự cố, chủ động cập nhật công nghệ' }
+  ],
+
+  /* SCR-08 — hộp duyệt offer */
+  offers: [
+    { id:'OFF-318', cand:'Hoàng Thị Mai Chi', jd:'JD-01 Senior Backend Engineer (Java)', salary:51840000, min:35000000, max:48000000, start:'01/09/2026', attempt:1, level:2, done:[{lv:1, who:'Trần Quốc Bảo', at:'15/08/2026 10:12'}] },
+    { id:'OFF-317', cand:'Ngô Phương Thảo',   jd:'JD-02 Data Engineer',                  salary:38000000, min:28000000, max:40000000, start:'08/09/2026', attempt:1, level:1, done:[] },
+    { id:'OFF-315', cand:'Phan Anh Tuấn',     jd:'JD-03 AI Engineer',                    salary:68000000, min:40000000, max:60000000, start:'15/09/2026', attempt:2, level:3, done:[{lv:1, who:'Trần Quốc Bảo', at:'13/08/2026 09:40'},{lv:2, who:'Lê Thu Hà', at:'14/08/2026 16:05'}] }
+  ],
+  approvers: { 1:{role:'HIRING_MANAGER', who:'Trần Quốc Bảo', title:'Hiring Manager'},
+               2:{role:'HEAD_OF_HR',     who:'Lê Thu Hà',     title:'Head of HR'},
+               3:{role:'FINANCE',        who:'Phạm Đức Duy',  title:'Người duyệt Tài chính'} },
+
+  /* SCR-10 — dữ liệu read model */
+  reports: {
+    funnel: [ {k:'Nộp hồ sơ',v:128}, {k:'Sàng lọc',v:86}, {k:'Phỏng vấn',v:41}, {k:'Nhận offer',v:12}, {k:'Tuyển thành công',v:7} ],
+    tth:    [ {k:'Khối Công nghệ',v:32}, {k:'Khối Dữ liệu',v:38}, {k:'Khối Sản phẩm',v:27}, {k:'Khối Vận hành',v:21} ],
+    tthTarget: 30,
+    src:    [ {k:'REFERRAL',hire:3,applied:24}, {k:'LINKEDIN',hire:2,applied:46}, {k:'WEBSITE',hire:1,applied:38}, {k:'HEADHUNTER',hire:1,applied:9}, {k:'EMAIL',hire:0,applied:11} ],
+    sla:    [ {k:'Th.3',v:88}, {k:'Th.4',v:91}, {k:'Th.5',v:84}, {k:'Th.6',v:93}, {k:'Th.7',v:96}, {k:'Th.8',v:94} ],
+    slaTarget: 90
+  },
+
+  /* Quyền suy ra từ vai trò — rút gọn từ ma trận RBAC 6 vai trò */
+  perms: {
+    RECRUITER:      ['Toàn quyền trên JD được phân công', 'Sàng lọc, xếp lịch, override kèm lý do', 'Tạo offer', 'Xem báo cáo giới hạn trong JD của mình'],
+    HIRING_MANAGER: ['Đọc JD và hồ sơ thuộc phòng ban', 'Duyệt mở JD', 'Duyệt offer cấp 1', 'Xem báo cáo phòng ban'],
+    INTERVIEWER:    ['Chỉ đọc packet của buổi phỏng vấn được giao', 'Toàn quyền trên scorecard của chính mình'],
+    HR_ADMIN:       ['Quản trị người dùng, phòng ban, template', 'Override xung đột lịch', 'Toàn quyền báo cáo', 'Tra cứu audit log'],
+    HEAD_OF_HR:     ['Đọc toàn bộ JD và hồ sơ', 'Duyệt offer cấp 2', 'Toàn quyền báo cáo', 'Đọc audit log'],
+    FINANCE:        ['Duyệt offer cấp 3 khi vượt band trên 10%', 'Đọc báo cáo chi phí offer']
+  }
+};
+
+/* Điều hướng — mỗi mục kèm danh sách vai trò được phép (deny-by-default) */
+var NAV = [
+  { id:'scr-02', label:'Bảng điều khiển', icon:'ic-dash',  roles:['RECRUITER','HIRING_MANAGER','HR_ADMIN','HEAD_OF_HR'], ro:['HIRING_MANAGER','HR_ADMIN','HEAD_OF_HR'] },
+  { id:'scr-03', label:'JD & Pipeline',   icon:'ic-board', roles:['RECRUITER','HIRING_MANAGER','HR_ADMIN','HEAD_OF_HR'], ro:['HIRING_MANAGER','HR_ADMIN','HEAD_OF_HR'] },
+  { id:'scr-04', label:'Hồ sơ ứng viên',  icon:'ic-user',  roles:['RECRUITER','HIRING_MANAGER','INTERVIEWER','HR_ADMIN','HEAD_OF_HR'], ro:['HIRING_MANAGER','INTERVIEWER','HR_ADMIN','HEAD_OF_HR'] },
+  { id:'scr-06', label:'Scorecard',       icon:'ic-score', roles:['INTERVIEWER','RECRUITER','HIRING_MANAGER','HEAD_OF_HR'], ro:['RECRUITER','HIRING_MANAGER','HEAD_OF_HR'] },
+  { id:'scr-07', label:'Tạo offer',       icon:'ic-offer', roles:['RECRUITER'], ro:[] },
+  { id:'scr-08', label:'Hộp duyệt offer', icon:'ic-inbox', roles:['HIRING_MANAGER','HEAD_OF_HR','FINANCE'], ro:[] },
+  { id:'scr-10', label:'Báo cáo',         icon:'ic-chart', roles:['RECRUITER','HIRING_MANAGER','HR_ADMIN','HEAD_OF_HR','FINANCE'], ro:['RECRUITER','HIRING_MANAGER','FINANCE'] },
+  { id:'scr-11', label:'Quản trị',        icon:'ic-admin', roles:['HR_ADMIN'], ro:[] }
+];
+
+var state = { role:'RECRUITER', screen:'scr-01', modal:null, selectedOffer:'OFF-318', demoStep:0, demoTimer:null, annot:true };
+
+/* ============================================================
+   2. Tiện ích chung
+   ============================================================ */
+function $(sel, root){ return (root||document).querySelector(sel); }
+function $$(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
+function fmt(n){ return Number(n).toLocaleString('vi-VN'); }
+function vnd(n){ return fmt(n) + ' VND'; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function roleOf(id){ for (var i=0;i<DB.roles.length;i++){ if (DB.roles[i].id===id) return DB.roles[i]; } return DB.roles[0]; }
+function navOf(id){ for (var i=0;i<NAV.length;i++){ if (NAV[i].id===id) return NAV[i]; } return null; }
+
+function toast(msg, kind){
+  var box = $('#toasts');
+  var el = document.createElement('div');
+  el.className = 'toast' + (kind === 'good' ? ' is-good' : kind === 'danger' ? ' is-danger' : '');
+  el.innerHTML = (kind === 'good' ? '<span aria-hidden="true">✓</span>' : kind === 'danger' ? '<span aria-hidden="true">✕</span>' : '<span aria-hidden="true">•</span>') + '<span>' + esc(msg) + '</span>';
+  box.appendChild(el);
+  setTimeout(function(){ el.style.transition = 'opacity .3s'; el.style.opacity = '0'; setTimeout(function(){ el.remove(); }, 320); }, 3600);
+}
+
+/* ============================================================
+   3. Điều hướng màn hình + RBAC
+   ============================================================ */
+function firstAllowed(){
+  for (var i=0;i<NAV.length;i++){ if (NAV[i].roles.indexOf(state.role) >= 0) return NAV[i].id; }
+  return 'scr-01';
+}
+
+function closeModal(){
+  $$('.modal-screen').forEach(function(m){ m.classList.remove('is-open'); });
+  state.modal = null;
+}
+
+function showScreen(id){
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (el.classList.contains('modal-screen')){ el.classList.add('is-open'); state.modal = id; return; }
+  closeModal();
+  var nav = navOf(id);
+  if (nav && nav.roles.indexOf(state.role) < 0){
+    toast('Vai trò ' + roleOf(state.role).label + ' bị từ chối truy cập màn hình ' + nav.label + ' — deny-by-default (BR-21, NFR-04)', 'danger');
+    id = firstAllowed();
+    el = document.getElementById(id);
+  }
+  $$('.screen').forEach(function(s){ s.classList.remove('is-active'); });
+  el.classList.add('is-active');
+  $('#shell').hidden = !el.classList.contains('in-shell');
+  state.screen = id;
+  renderNav();
+  var crumbNav = navOf(id);
+  $('#crumb').innerHTML = 'VXTech · <b>' + esc(crumbNav ? crumbNav.label : 'Ngoài khung nội bộ') + '</b>';
+  window.scrollTo(0, 0);
+}
+
+function renderNav(){
+  var html = '';
+  for (var i=0;i<NAV.length;i++){
+    var n = NAV[i];
+    if (n.roles.indexOf(state.role) < 0) continue;
+    var ro = n.ro.indexOf(state.role) >= 0;
+    html += '<button class="nav-item' + (state.screen === n.id ? ' is-current' : '') + '" type="button" onclick="showScreen(\'' + n.id + '\')">' +
+            '<svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><use href="#' + n.icon + '"/></svg>' +
+            '<span>' + esc(n.label) + '</span>' + (ro ? '<span class="ro" title="Chỉ đọc theo ma trận RBAC">R</span>' : '') + '</button>';
+  }
+  $('#nav').innerHTML = html;
+}
+
+function applyRbac(){
+  var r = roleOf(state.role);
+  $('#who-name').textContent = r.person;
+  $('#who-meta').textContent = r.label + ' · ' + r.dept;
+  $('#who-avatar').textContent = r.ini;
+  $('#role-select').value = r.id;
+  $('#dash-owner').textContent = r.person;
+
+  $$('[data-roles]').forEach(function(el){
+    el.hidden = el.getAttribute('data-roles').split(' ').indexOf(state.role) < 0;
+  });
+
+  var canScreen = state.role === 'RECRUITER';
+  $('#kanban-hint').hidden = !canScreen;
+  $('#kanban-lock').hidden = canScreen;
+
+  $('#cv-open').hidden  = state.role === 'INTERVIEWER';
+  $('#cv-blocked').hidden = state.role !== 'INTERVIEWER';
+
+  var canScore = state.role === 'INTERVIEWER';
+  $('#sc-ro').hidden = canScore;
+  $$('#sc-form input, #sc-form textarea, #sc-form select').forEach(function(el){ el.disabled = !canScore; });
+  $('#sc-submit').disabled = !canScore || !scoreComplete();
+
+  renderNav();
+  renderKanban();
+  renderInbox();
+  renderAdminPerms();
+}
+
+function setRole(id, silent){
+  state.role = id;
+  applyRbac();
+  var nav = navOf(state.screen);
+  if (nav && nav.roles.indexOf(id) < 0) showScreen(firstAllowed());
+  if (!silent) toast('Đang xem hệ thống với vai trò ' + roleOf(id).label + ' — menu và nút hành động đổi theo ma trận RBAC');
+}
+
+/* ============================================================
+   4. SCR-02 — Dashboard
+   ============================================================ */
+function renderDashboard(){
+  var rows = '';
+  for (var i=0;i<DB.jds.length;i++){
+    var j = DB.jds[i];
+    rows += '<tr><td class="mono tiny">' + j.id + '</td><td><b>' + esc(j.title) + '</b><div class="tiny dim">Band ' + fmt(j.min) + ' – ' + fmt(j.max) + ' VND · headcount ' + j.headcount + '</div></td>' +
+            '<td class="tiny">' + esc(j.dept) + '</td><td class="right mono">' + j.cv + '</td><td class="right mono">' + j.iv + '</td>' +
+            '<td><span class="chip ' + (j.status === 'OPEN' ? 'chip-good' : 'chip-neutral') + '">' + j.status + '</span></td>' +
+            '<td class="right"><button class="btn btn-sm" type="button" onclick="showScreen(\'scr-03\')">Mở pipeline</button></td></tr>';
+  }
+  $('#jd-rows').innerHTML = rows;
+
+  var tasks = '';
+  for (var t=0;t<DB.tasks.length;t++){
+    var k = DB.tasks[t];
+    tasks += '<li class="row" style="gap:9px;align-items:flex-start"><span class="chip chip-' + k.k + '" style="margin-top:2px">&nbsp;</span>' +
+             '<span style="flex:1;min-width:0"><b style="font-size:13px">' + esc(k.t) + '</b><span class="tiny dim" style="display:block">' + esc(k.s) + '</span></span></li>';
+  }
+  $('#task-list').innerHTML = tasks;
+}
+
+/* ============================================================
+   5. SCR-03 — Kanban kéo-thả
+   ============================================================ */
+function renderKanban(){
+  var canDrag = state.role === 'RECRUITER';
+  var html = '';
+  for (var c=0;c<DB.columns.length;c++){
+    var col = DB.columns[c];
+    var cards = DB.cards.filter(function(x){ return x.col === col.id; });
+    html += '<div class="kcol" data-col="' + col.id + '"><div class="kcol-head"><h3>' + esc(col.label) + '</h3><span class="kcol-count">' + cards.length + '</span></div><div class="kcol-body">';
+    if (!cards.length) html += '<div class="kempty">Không có hồ sơ</div>';
+    for (var i=0;i<cards.length;i++){
+      var k = cards[i];
+      html += '<article class="kcard' + (canDrag ? '' : ' is-locked') + '" draggable="' + (canDrag ? 'true' : 'false') + '" data-id="' + k.id + '" tabindex="0" title="Space nhấc thẻ, mũi tên trái/phải chọn cột, Enter thả, Escape huỷ">' +
+              '<div class="kc-name">' + esc(k.name) + '</div>' +
+              '<div class="kc-meta">' + k.id + ' · nộp ' + k.day + ' · ' + esc(k.note) + '</div>' +
+              '<div class="kc-foot"><span class="chip chip-plain chip-neutral">' + k.src + '</span>' +
+              (canDrag ? '<button class="btn btn-sm btn-ghost" type="button" onclick="openSchedule()">Xếp lịch</button>' : '') + '</div></article>';
+    }
+    html += '</div></div>';
+  }
+  $('#kanban').innerHTML = html;
+  kbPick = { id:null, idx:-1 };
+  wireKanban();
+}
+
+/* Trạng thái nhấc thẻ bằng bàn phím: id thẻ đang giữ và chỉ số cột đích đang trỏ tới */
+var kbPick = { id:null, idx:-1 };
+
+function colIndex(id){
+  for (var c=0;c<DB.columns.length;c++){ if (DB.columns[c].id === id) return c; }
+  return -1;
+}
+
+function markBlockedColumns(fromCol){
+  $$('.kcol').forEach(function(col){
+    var to = col.getAttribute('data-col');
+    col.classList.toggle('is-blocked', fromCol !== null && to !== fromCol && !canMove(fromCol, to));
+  });
+}
+
+function clearKbPick(){
+  kbPick = { id:null, idx:-1 };
+  $$('.kcol').forEach(function(c){ c.classList.remove('kb-target', 'is-blocked'); });
+  $$('.kcard').forEach(function(c){ c.classList.remove('kb-picked'); });
+  var st = $('#kb-status');
+  if (st) st.textContent = '';
+}
+
+function paintKbTarget(){
+  $$('.kcol').forEach(function(c){ c.classList.remove('kb-target'); });
+  var col = $$('.kcol')[kbPick.idx];
+  if (col) col.classList.add('kb-target');
+}
+
+function wireKanban(){
+  $$('.kcard[draggable="true"]').forEach(function(card){
+    card.addEventListener('dragstart', function(ev){
+      ev.dataTransfer.setData('text/plain', card.getAttribute('data-id'));
+      ev.dataTransfer.effectAllowed = 'move';
+      card.classList.add('is-drag');
+      var c = cardOf(card.getAttribute('data-id'));
+      if (c) markBlockedColumns(c.col);
+    });
+    card.addEventListener('dragend', function(){
+      card.classList.remove('is-drag');
+      markBlockedColumns(null);
+    });
+
+    /* Lộ trình bàn phím tương đương kéo thả (NFR-14):
+       Space nhấc thẻ, mũi tên trái/phải đổi cột đích, Enter thả, Escape huỷ. */
+    card.addEventListener('keydown', function(ev){
+      var id = card.getAttribute('data-id');
+      var c = cardOf(id);
+      if (!c) return;
+      if (ev.key === ' ' || ev.key === 'Spacebar'){
+        ev.preventDefault();
+        if (kbPick.id === id){ clearKbPick(); toast('Đã đặt thẻ lại chỗ cũ'); return; }
+        clearKbPick();
+        kbPick.id = id;
+        kbPick.idx = colIndex(c.col);
+        card.classList.add('kb-picked');
+        markBlockedColumns(c.col);
+        paintKbTarget();
+        toast('Đã nhấc thẻ ' + c.name + ' — dùng phím mũi tên để chọn cột, Enter để thả, Escape để huỷ');
+        return;
+      }
+      if (kbPick.id !== id) return;
+      if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight'){
+        ev.preventDefault();
+        var step = ev.key === 'ArrowRight' ? 1 : -1;
+        kbPick.idx = Math.min(DB.columns.length - 1, Math.max(0, kbPick.idx + step));
+        paintKbTarget();
+        var target = DB.columns[kbPick.idx];
+        var ok = target.id === c.col || canMove(c.col, target.id);
+        toast('Cột đích: ' + target.label + (ok ? '' : ' — STATE-01 không cho phép chuyển thẳng tới cột này'));
+        return;
+      }
+      if (ev.key === 'Enter'){
+        ev.preventDefault();
+        var to = DB.columns[kbPick.idx].id;
+        clearKbPick();
+        moveCard(id, to);
+        return;
+      }
+      if (ev.key === 'Escape'){
+        ev.preventDefault();
+        clearKbPick();
+        toast('Đã huỷ thao tác chuyển cột');
+      }
+    });
+  });
+  $$('.kcol').forEach(function(col){
+    col.addEventListener('dragover', function(ev){ ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; col.classList.add('drop-hover'); });
+    col.addEventListener('dragleave', function(){ col.classList.remove('drop-hover'); });
+    col.addEventListener('drop', function(ev){
+      ev.preventDefault();
+      col.classList.remove('drop-hover');
+      var id = ev.dataTransfer.getData('text/plain');
+      var to = col.getAttribute('data-col');
+      markBlockedColumns(null);
+      moveCard(id, to);
+    });
+  });
+}
+
+function cardOf(id){
+  for (var i=0;i<DB.cards.length;i++){ if (DB.cards[i].id === id) return DB.cards[i]; }
+  return null;
+}
+
+function labelOfCol(id){
+  for (var c=0;c<DB.columns.length;c++){ if (DB.columns[c].id === id) return DB.columns[c].label; }
+  return id;
+}
+
+function canMove(from, to){
+  var list = DB.allowed[from] || [];
+  return list.indexOf(to) >= 0;
+}
+
+function moveCard(id, to){
+  var card = null;
+  for (var i=0;i<DB.cards.length;i++){ if (DB.cards[i].id === id) card = DB.cards[i]; }
+  if (!card || card.col === to) return;
+  if (!canMove(card.col, to)){
+    toast('STATE-01 không có transition trực tiếp ' + labelOfCol(card.col) + ' → ' + labelOfCol(to) +
+          ' — thẻ bật về chỗ cũ, không gọi API', 'danger');
+    renderKanban();
+    return;
+  }
+  var from = card.col;
+  card.col = to;
+  renderKanban();
+  if (to === 'SHORTLISTED'){
+    toast('Đã cập nhật trạng thái — đã ghi audit log', 'good');
+  } else {
+    toast(card.name + ': ' + labelOfCol(from) + ' → ' + labelOfCol(to) + ' — đã ghi application_status_history');
+  }
+}
+</script>
+<script>
+/* ============================================================
+   6. SCR-05 — Modal xếp lịch, phát hiện xung đột (BR-03)
+   ============================================================ */
+function renderSchedule(){
+  var iv = '';
+  for (var i=0;i<DB.interviewers.length;i++){
+    var p = DB.interviewers[i];
+    iv += '<label class="check' + (i === 0 ? ' is-on' : '') + '"><input type="checkbox" class="sch-iv" value="' + p.id + '"' + (i === 0 ? ' checked' : '') + '>' +
+          '<span><b>' + esc(p.name) + '</b><span class="c-sub">' + esc(p.title) + (p.busy.length ? ' · đã có lịch ' + p.busy.join(', ') : ' · lịch trống cả ngày') + '</span></span></label>';
+  }
+  $('#sch-interviewers').innerHTML = iv;
+
+  var sl = '';
+  for (var s=0;s<DB.slots.length;s++){
+    var o = DB.slots[s];
+    sl += '<label class="slot" data-slot="' + o.id + '"><input type="radio" name="sch-slot" value="' + o.id + '">' +
+          '<span><span class="s-time">' + o.time + '</span><span class="s-note" data-note="' + o.id + '">Còn trống</span></span></label>';
+  }
+  $('#sch-slots').innerHTML = sl;
+
+  var sg = '';
+  for (var g=0;g<DB.suggested.length;g++){
+    sg += '<button class="btn btn-sm" type="button" data-suggest="' + g + '">' + DB.suggested[g] + '</button>';
+  }
+  $('#sch-suggest').innerHTML = sg;
+
+  $$('.sch-iv').forEach(function(el){ el.addEventListener('change', function(){ el.closest('.check').classList.toggle('is-on', el.checked); evaluateSchedule(); }); });
+  $$('input[name="sch-slot"]').forEach(function(el){ el.addEventListener('change', evaluateSchedule); });
+  $('#sch-reason').addEventListener('input', evaluateSchedule);
+  $('#sch-commit').addEventListener('change', evaluateSchedule);
+  $$('[data-suggest]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var idx = b.getAttribute('data-suggest');
+      var map = { '0':'s1', '1':'s4', '2':'s2' };
+      var target = $('input[name="sch-slot"][value="' + map[idx] + '"]');
+      if (target){ target.checked = true; }
+      $('#sch-reason').value = '';
+      $('#sch-commit').checked = false;
+      evaluateSchedule();
+      toast('Đã chọn khung giờ gợi ý ' + DB.suggested[idx] + ' — hệ thống kiểm tra lại xung đột');
+    });
+  });
+}
+
+function selectedInterviewers(){
+  var out = [];
+  $$('.sch-iv').forEach(function(el){
+    if (!el.checked) return;
+    for (var i=0;i<DB.interviewers.length;i++){ if (DB.interviewers[i].id === el.value) out.push(DB.interviewers[i]); }
+  });
+  return out;
+}
+
+function evaluateSchedule(){
+  var people = selectedInterviewers();
+  var picked = $('input[name="sch-slot"]:checked');
+  var slot = null;
+  if (picked){ for (var i=0;i<DB.slots.length;i++){ if (DB.slots[i].id === picked.value) slot = DB.slots[i]; } }
+
+  /* Đánh dấu khung giờ nào đang trùng với người đã chọn */
+  for (var s=0;s<DB.slots.length;s++){
+    var o = DB.slots[s];
+    var busyWith = people.filter(function(p){ return p.busy.indexOf(o.key) >= 0; });
+    var label = $('.slot[data-slot="' + o.id + '"]');
+    var note = $('[data-note="' + o.id + '"]');
+    if (!label) continue;
+    label.classList.toggle('is-conflict', busyWith.length > 0);
+    label.classList.toggle('is-on', !!picked && picked.value === o.id);
+    note.textContent = busyWith.length ? ('Trùng lịch: ' + busyWith.map(function(p){ return p.name; }).join(', ')) : 'Còn trống';
+  }
+
+  var conflict = slot ? people.filter(function(p){ return p.busy.indexOf(slot.key) >= 0; }) : [];
+  var reason = $('#sch-reason').value.trim();
+  var committed = $('#sch-commit').checked;
+
+  if (!slot){
+    $('#sch-conflict').hidden = true; $('#sch-override').hidden = true; $('#sch-ok').hidden = true;
+    $('#sch-confirm').disabled = true;
+    $('#sch-state').textContent = 'Chưa chọn khung giờ';
+    return;
+  }
+  if (conflict.length){
+    $('#sch-conflict').hidden = false; $('#sch-override').hidden = false; $('#sch-ok').hidden = true;
+    $('#sch-conflict-text').innerHTML = conflict.map(function(p){ return '<b>' + esc(p.name) + '</b>'; }).join(', ') +
+      ' đã có buổi phỏng vấn INT-2061 lúc 20/08/2026 ' + slot.time + ' (ứng viên Bùi Tuấn Kiệt, vòng Technical Round 1). ' +
+      'Khoảng thời gian mới thoả điều kiện chồng lấn nên yêu cầu bị chặn ở tầng service.';
+    $('#sch-confirm').disabled = reason.length < 20 || !committed;
+    $('#sch-state').textContent = reason.length < 20
+      ? 'Xung đột lịch — cần nhập lý do override tối thiểu 20 ký tự'
+      : (!committed ? 'Còn thiếu ô cam kết trách nhiệm' : 'Sẵn sàng ép xếp lịch kèm lý do (ghi audit log)');
+  } else {
+    $('#sch-conflict').hidden = true; $('#sch-override').hidden = true; $('#sch-ok').hidden = false;
+    $('#sch-confirm').disabled = false;
+    $('#sch-state').textContent = 'Khung giờ hợp lệ — sẵn sàng tạo Interview';
+  }
+}
+
+function openSchedule(){
+  if (state.role !== 'RECRUITER'){
+    toast('Chỉ Recruiter phụ trách JD mới được xếp lịch phỏng vấn (RBAC — BR-21)', 'danger');
+    return;
+  }
+  $$('input[name="sch-slot"]').forEach(function(el){ el.checked = false; });
+  $('#sch-reason').value = '';
+  $('#sch-commit').checked = false;
+  evaluateSchedule();
+  showScreen('scr-05');
+}
+
+/* ============================================================
+   7. SCR-06 — Scorecard, bắt buộc comment (BR-15)
+   ============================================================ */
+var scoreState = { submitted:false };
+
+function renderScorecard(){
+  var html = '';
+  for (var i=0;i<DB.criteria.length;i++){
+    var c = DB.criteria[i];
+    var scale = '';
+    for (var v=1;v<=5;v++){
+      scale += '<label data-for="' + c.k + '" data-v="' + v + '"><input type="radio" name="sc-' + c.k + '" value="' + v + '">' + v + '</label>';
+    }
+    html += '<div class="crit"><div class="crit-head"><h3>' + (i+1) + '. ' + esc(c.label) + '</h3>' +
+            '<div class="scale" data-scale="' + c.k + '">' + scale + '</div></div>' +
+            '<div class="tiny dim" style="margin-bottom:7px">' + esc(c.hint) + '</div>' +
+            '<textarea data-comment="' + c.k + '" placeholder="Nhận xét bắt buộc cho tiêu chí này…"></textarea></div>';
+  }
+  $('#sc-criteria').innerHTML = html;
+
+  $$('#sc-criteria input[type="radio"]').forEach(function(el){
+    el.addEventListener('change', function(){
+      var k = el.name.replace('sc-', '');
+      $$('[data-scale="' + k + '"] label').forEach(function(l){ l.classList.toggle('is-on', l.getAttribute('data-v') === el.value); });
+      updateScorecard();
+    });
+  });
+  $$('#sc-criteria textarea').forEach(function(el){ el.addEventListener('input', updateScorecard); });
+  $('#sc-verdict').addEventListener('change', updateScorecard);
+  updateScorecard();
+}
+
+function scoreValues(){
+  var out = [];
+  for (var i=0;i<DB.criteria.length;i++){
+    var c = DB.criteria[i];
+    var picked = $('input[name="sc-' + c.k + '"]:checked');
+    var cmt = $('[data-comment="' + c.k + '"]');
+    out.push({ k:c.k, label:c.label, score: picked ? Number(picked.value) : null, comment: cmt ? cmt.value.trim() : '' });
+  }
+  return out;
+}
+
+function scoreComplete(){
+  var vals = scoreValues();
+  for (var i=0;i<vals.length;i++){ if (vals[i].score === null || vals[i].comment.length < 3) return false; }
+  return !!$('#sc-verdict').value;
+}
+
+function updateScorecard(){
+  var vals = scoreValues();
+  var filled = vals.filter(function(v){ return v.score !== null; });
+  var avg = filled.length ? filled.reduce(function(a, b){ return a + b.score; }, 0) / filled.length : null;
+  $('#sc-avg').textContent = avg === null ? '—' : avg.toFixed(2).replace('.', ',');
+
+  var sum = '';
+  for (var i=0;i<vals.length;i++){
+    var v = vals[i];
+    var ok = v.score !== null && v.comment.length >= 3;
+    sum += '<li class="row" style="gap:8px"><span class="chip chip-plain ' + (ok ? 'chip-good' : 'chip-neutral') + '" style="min-width:22px;justify-content:center">' + (v.score === null ? '–' : v.score) + '</span>' +
+           '<span style="flex:1;min-width:0" class="tiny">' + esc(v.label) + '</span>' +
+           '<span class="tiny ' + (v.comment.length >= 3 ? 'dim' : '') + '" style="' + (v.comment.length >= 3 ? '' : 'color:var(--danger-ink);font-weight:600') + '">' +
+           (v.comment.length >= 3 ? 'đã có nhận xét' : 'thiếu nhận xét') + '</span></li>';
+  }
+  $('#sc-summary').innerHTML = sum;
+
+  var missScore = vals.filter(function(v){ return v.score === null; }).length;
+  var missCmt = vals.filter(function(v){ return v.comment.length < 3; }).length;
+  var ready = scoreComplete();
+  $('#sc-guard').hidden = ready;
+  if (!ready){
+    $('#sc-guard-text').textContent = 'Còn thiếu ' + missScore + ' điểm và ' + missCmt + ' nhận xét. Mỗi tiêu chí phải có cả điểm lẫn nhận xét bằng lời trước khi submit (BR-15).';
+  }
+  $('#sc-submit').disabled = !ready || state.role !== 'INTERVIEWER';
+}
+
+function submitScorecard(){
+  if (!scoreComplete()) return;
+  scoreState.submitted = true;
+  /* Sau khi submit, bảng tiêu chí vẫn hiển thị nhưng chuyển sang chỉ đọc để
+     người xem đối chiếu được điểm và nhận xét đã ghi (UC-03 A5.1). */
+  $$('#sc-form input, #sc-form textarea, #sc-form select').forEach(function(el){ el.disabled = true; });
+  $('#sc-locked').hidden = false;
+  $('#sc-submit').disabled = true;
+  $('#sc-deadline').textContent = 'Đã submit 14/08/2026 15:05';
+  $('#sc-deadline').className = 'chip chip-good';
+  toast('Đã lưu feedback, tính điểm trung bình và thông báo cho Recruiter — khoá sau 24h', 'good');
+}
+
+function resetScorecard(){
+  scoreState.submitted = false;
+  $('#sc-form').hidden = false;
+  $$('#sc-form input, #sc-form textarea, #sc-form select').forEach(function(el){ el.disabled = state.role !== 'INTERVIEWER'; });
+  $('#sc-locked').hidden = true;
+  $('#sc-deadline').textContent = 'Hạn submit 16/08/2026 14:00 (48h — BR-06)';
+  $('#sc-deadline').className = 'chip chip-warn';
+  $$('#sc-criteria input[type="radio"]').forEach(function(el){ el.checked = false; });
+  $$('#sc-criteria .scale label').forEach(function(l){ l.classList.remove('is-on'); });
+  $$('#sc-criteria textarea').forEach(function(el){ el.value = ''; });
+  updateScorecard();
+}
+
+/* ============================================================
+   8. SCR-07 — Offer Wizard 4 bước, chuỗi duyệt theo BR-08
+   ============================================================ */
+var wizard = { step:1, sent:false };
+
+function bandInfo(salary){
+  var min = 35000000, max = 48000000;
+  if (salary > max){
+    var over = (salary - max) / max * 100;
+    return { levels: over > 10 ? 3 : 2, over: over, kind: over > 10 ? 'over10' : 'over' };
+  }
+  if (salary < min) return { levels:1, over:0, kind:'under' };
+  return { levels:1, over:0, kind:'in' };
+}
+
+function renderChain(salary){
+  var info = bandInfo(salary);
+  var html = '';
+  for (var lv=1; lv<=3; lv++){
+    var ap = DB.approvers[lv];
+    var active = lv <= info.levels;
+    html += '<div class="chain-item' + (active ? '' : '') + '" style="' + (active ? '' : 'opacity:.4') + '">' +
+            '<span class="lv">' + lv + '</span><span class="cn"><b>' + esc(ap.who) + '</b><span>' + esc(ap.title) + (active ? '' : ' — không tham gia ở mức lương này') + '</span></span>' +
+            '<span class="chip ' + (active ? 'chip-info' : 'chip-neutral') + '">' + (active ? 'Cấp ' + lv : 'Bỏ qua') + '</span></div>';
+  }
+  $('#ow-chain').innerHTML = html;
+  $('#ow-levels').textContent = info.levels + ' cấp duyệt';
+
+  var t = $('#ow-band-title'), d = $('#ow-band-text'), box = $('#ow-band');
+  if (info.kind === 'in'){
+    box.className = 'alert alert-good';
+    t.textContent = vnd(salary) + ' — nằm trong band của JD-01';
+    d.textContent = 'Không vượt trần 48.000.000 VND nên chỉ cần 1 cấp duyệt là Hiring Manager Trần Quốc Bảo.';
+  } else if (info.kind === 'under'){
+    box.className = 'alert alert-warn';
+    t.textContent = vnd(salary) + ' — thấp hơn sàn band 35.000.000 VND';
+    d.textContent = 'Không vượt trần band nên vẫn chỉ cần 1 cấp duyệt là Hiring Manager Trần Quốc Bảo; mức dưới sàn cần Recruiter giải trình với ứng viên chứ không làm tăng số cấp duyệt.';
+  } else if (info.kind === 'over'){
+    box.className = 'alert alert-warn';
+    t.textContent = vnd(salary) + ' — vượt trần band ' + info.over.toFixed(1).replace('.', ',') + '%';
+    d.textContent = 'Mức vượt không quá 10% nên chuỗi duyệt gồm 2 cấp: Hiring Manager và Head of HR.';
+  } else {
+    box.className = 'alert alert-danger';
+    t.textContent = vnd(salary) + ' — vượt trần band ' + info.over.toFixed(1).replace('.', ',') + '%';
+    d.textContent = 'Mức vượt trên 10% nên bắt buộc thêm cấp duyệt tài chính: Hiring Manager, Head of HR và Người duyệt Tài chính.';
+  }
+
+  var names = [];
+  for (var i=1;i<=info.levels;i++) names.push('cấp ' + i + ' ' + DB.approvers[i].who);
+  $('#ow-chain-text').textContent = 'Mức ' + vnd(salary) + ' cần ' + info.levels + ' cấp duyệt: ' + names.join(', ') + '. Chuỗi duyệt được tính lại tự động mỗi khi mức lương thay đổi (BR-08).';
+
+  // Ghi chú gửi cấp duyệt phải bám đúng mức lương đang nhập. Trước đây câu này được
+  // viết cứng "cao hơn trần band 8%" nên khi kịch bản demo đẩy lương lên mức vượt >10%
+  // thì ảnh chụp màn hình tự mâu thuẫn với chính khối "Chuỗi duyệt áp dụng" ngay bên cạnh.
+  var note = $('#ow-note');
+  if (note && !note.dataset.touched){
+    var clause;
+    if (info.kind === 'in')        clause = 'Mức đề xuất nằm trong band nên chỉ cần 1 cấp duyệt.';
+    else if (info.kind === 'under') clause = 'Mức đề xuất thấp hơn sàn band, cần giải trình với ứng viên nhưng không làm tăng số cấp duyệt.';
+    else clause = 'Mức đề xuất cao hơn trần band ' + info.over.toFixed(1).replace('.', ',')
+               + '% do đang giữ 2 offer khác cùng phân khúc, nên cần ' + info.levels + ' cấp duyệt.';
+    note.value = note.dataset.base + ' ' + clause;
+  }
+  return info;
+}
+
+function renderReview(){
+  var salary = Number($('#ow-salary').value || 0);
+  var info = bandInfo(salary);
+  var rows = [
+    ['Ứng viên', 'Hoàng Thị Mai Chi — APP-1042'],
+    ['Vị trí', $('#ow-title').value + ' · JD-01'],
+    ['Lương gross tháng', vnd(salary)],
+    ['So với band', info.kind === 'in' ? 'Trong band 35.000.000 – 48.000.000 VND'
+        : info.kind === 'under' ? 'Thấp hơn sàn band 35.000.000 VND'
+        : 'Vượt trần band ' + info.over.toFixed(1).replace('.', ',') + '%'],
+    ['Số cấp duyệt', info.levels + ' cấp'],
+    ['Ngày bắt đầu', $('#ow-start').value.split('-').reverse().join('/')],
+    ['Hạn phản hồi', $('#ow-deadline').value.split('-').reverse().join('/') + ' (BR-09)'],
+    ['Phúc lợi', $('#ow-bonus').value]
+  ];
+  var html = '<tbody>';
+  for (var i=0;i<rows.length;i++){
+    html += '<tr><th style="width:190px">' + esc(rows[i][0]) + '</th><td>' + esc(rows[i][1]) + '</td></tr>';
+  }
+  $('#ow-review').innerHTML = html + '</tbody>';
+}
+
+function setWizardStep(n){
+  wizard.step = Math.max(1, Math.min(4, n));
+  $$('#ow-steps .step').forEach(function(s){
+    var i = Number(s.getAttribute('data-step'));
+    s.classList.toggle('is-on', i === wizard.step);
+    s.classList.toggle('is-done', i < wizard.step);
+  });
+  $$('.wstep').forEach(function(w){ w.classList.toggle('is-on', Number(w.getAttribute('data-w')) === wizard.step); });
+  $('#ow-prev').disabled = wizard.step === 1;
+  $('#ow-next').disabled = wizard.step === 4;
+  $('#ow-step-label').textContent = 'Bước ' + wizard.step + ' / 4';
+  if (wizard.step === 3) renderReview();
+}
+
+/* ============================================================
+   9. SCR-08 — Hộp duyệt offer
+   ============================================================ */
+function offerById(id){ for (var i=0;i<DB.offers.length;i++){ if (DB.offers[i].id === id) return DB.offers[i]; } return DB.offers[0]; }
+
+function overPct(o){ return o.salary > o.max ? (o.salary - o.max) / o.max * 100 : 0; }
+function levelsOf(o){ var p = overPct(o); return p <= 0 ? 1 : (p > 10 ? 3 : 2); }
+
+function renderInbox(){
+  var list = '';
+  for (var i=0;i<DB.offers.length;i++){
+    var o = DB.offers[i];
+    var mine = DB.approvers[o.level].role === state.role;
+    list += '<button class="card" type="button" style="text-align:left;padding:10px 12px;border-color:' + (state.selectedOffer === o.id ? 'var(--accent)' : 'var(--border)') + '" onclick="selectOffer(\'' + o.id + '\')">' +
+            '<div class="row" style="gap:6px"><b style="font-size:13px;flex:1">' + esc(o.cand) + '</b><span class="chip ' + (mine ? 'chip-warn' : 'chip-neutral') + '">Cấp ' + o.level + '</span></div>' +
+            '<div class="tiny dim">' + o.id + ' · ' + vnd(o.salary) + (overPct(o) > 0 ? ' · vượt band ' + overPct(o).toFixed(1).replace('.', ',') + '%' : ' · trong band') + '</div>' +
+            '<div class="tiny" style="margin-top:4px;color:' + (mine ? 'var(--warn-ink)' : 'var(--text-3)') + '">' + (mine ? 'Đang chờ quyết định của bạn' : 'Chờ ' + DB.approvers[o.level].who) + '</div></button>';
+  }
+  $('#inbox-list').innerHTML = list;
+  $('#inbox-count').textContent = DB.offers.length + ' offer chờ duyệt';
+  renderOfferDetail();
+}
+
+function selectOffer(id){ state.selectedOffer = id; renderInbox(); }
+
+function renderOfferDetail(){
+  var o = offerById(state.selectedOffer);
+  var lv = levelsOf(o);
+  var mine = DB.approvers[o.level].role === state.role;
+  var chain = '';
+  for (var i=1;i<=lv;i++){
+    var ap = DB.approvers[i];
+    var done = o.done.filter(function(d){ return d.lv === i; })[0];
+    chain += '<div class="chain-item' + (done ? ' is-done' : (i === o.level ? ' is-now' : '')) + '">' +
+             '<span class="lv">' + (done ? '✓' : i) + '</span><span class="cn"><b>' + esc(ap.who) + '</b><span>' + esc(ap.title) + (done ? ' · đã duyệt ' + done.at : (i === o.level ? ' · đang chờ quyết định' : ' · chưa tới lượt')) + '</span></span></div>';
+  }
+
+  $('#inbox-detail').innerHTML =
+    '<div class="card-head"><h2>' + esc(o.cand) + '</h2><span class="chip chip-info">' + o.id + '</span><span class="chip chip-plain chip-neutral">attempt_no = ' + o.attempt + '</span></div>' +
+    '<div class="card-body">' +
+      '<div class="grid g-2" style="gap:10px 20px">' +
+        '<div><div class="tiny dim">Vị trí</div><div><b>' + esc(o.jd) + '</b></div></div>' +
+        '<div><div class="tiny dim">Ngày bắt đầu dự kiến</div><div>' + o.start + '</div></div>' +
+        '<div><div class="tiny dim">Lương gross tháng</div><div><b>' + vnd(o.salary) + '</b></div></div>' +
+        '<div><div class="tiny dim">Band của JD</div><div>' + fmt(o.min) + ' – ' + fmt(o.max) + ' VND' + (overPct(o) > 0 ? ' · <b style="color:var(--danger-ink)">vượt ' + overPct(o).toFixed(1).replace('.', ',') + '%</b>' : ' · trong band') + '</div></div>' +
+      '</div>' +
+      '<div class="sep"></div>' +
+      '<h3 style="margin-bottom:8px">Chuỗi duyệt (' + lv + ' cấp — BR-08)</h3>' + '<div class="chain">' + chain + '</div>' +
+      '<div class="sep"></div>' +
+      (mine ? '' : '<div class="alert alert-neutral" style="margin-bottom:12px"><span class="a-ic">🔒</span><div><b>Không phải cấp duyệt đang chờ</b>Vai trò ' + esc(roleOf(state.role).label) + ' không được ra quyết định cho offer này. Nút hành động bị khoá ở giao diện và yêu cầu tương ứng cũng bị từ chối ở tầng service (ADR-10).</div></div>') +
+      '<div class="row">' +
+        '<button class="btn btn-good" type="button" onclick="decide(\'APPROVED\')"' + (mine ? '' : ' disabled') + '>Duyệt</button>' +
+        '<button class="btn btn-danger" type="button" onclick="decide(\'REJECTED\')"' + (mine ? '' : ' disabled') + '>Từ chối</button>' +
+        '<button class="btn btn-warn" type="button" onclick="decide(\'REQUEST_CHANGE\')"' + (mine ? '' : ' disabled') + '>Yêu cầu chỉnh sửa</button>' +
+      '</div>' +
+      '<div class="alert" id="decision-box" hidden style="margin-top:14px"><span class="a-ic">i</span><div><b id="decision-t">—</b><span id="decision-d">—</span></div></div>' +
+    '</div>';
+}
+
+function showDecision(cls, title, desc){
+  var box = $('#decision-box');
+  if (!box) return;
+  box.hidden = false;
+  box.className = 'alert alert-' + cls;
+  $('#decision-t').textContent = title;
+  $('#decision-d').textContent = desc;
+}
+
+function decide(kind){
+  var o = offerById(state.selectedOffer);
+  var cls, title, desc;
+
+  if (kind === 'APPROVED'){
+    var lv = levelsOf(o);
+    o.done.push({ lv:o.level, who:DB.approvers[o.level].who, at:'16/08/2026 09:20' });
+    if (o.level < lv){
+      o.level = o.level + 1;
+      cls = 'good';
+      title = 'Đã duyệt và chuyển tiếp cấp ' + o.level;
+      desc = 'Quyết định được ghi vào offer_approvals; ApprovalWorkflow chuyển yêu cầu tới ' + DB.approvers[o.level].who + ' (' + DB.approvers[o.level].title + ').';
+      toast('Đã duyệt — chuyển tới cấp ' + o.level + ' ' + DB.approvers[o.level].who, 'good');
+    } else {
+      cls = 'good';
+      title = 'Offer đã đủ cấp duyệt';
+      desc = 'Offer chuyển sang APPROVED rồi SIGNED_BY_COMPANY và được gửi tới Candidate Portal; Application chuyển OFFER_SENT với hạn phản hồi 7 ngày làm việc (BR-09).';
+      toast('Offer đủ cấp duyệt — đã gửi tới cổng ứng viên', 'good');
+    }
+  } else if (kind === 'REJECTED'){
+    cls = 'danger';
+    title = 'Đã từ chối offer ở cấp ' + o.level;
+    desc = 'Offer chuyển REJECTED_INTERNALLY, Application quay về SCREENING theo STATE-01; Recruiter nhận thông báo kèm lý do từ chối.';
+    toast('Đã từ chối offer — Application quay về SCREENING', 'danger');
+  } else {
+    o.attempt = o.attempt + 1;
+    o.level = 1;
+    o.done = [];
+    cls = 'warn';
+    title = 'Đã trả offer về cho Recruiter chỉnh sửa';
+    desc = 'Theo BR-16 và UC-04 A4.1, hành động Yêu cầu chỉnh sửa không giữ lại các cấp đã duyệt: offer tăng attempt_no lên ' + o.attempt +
+           ', mọi phê duyệt của lần trước bị vô hiệu và chuỗi duyệt chạy lại từ cấp 1 (' + DB.approvers[1].who + '). Lịch sử các lần duyệt trước vẫn được giữ trong offer_approvals để tra cứu.';
+    toast('Yêu cầu chỉnh sửa — chuỗi duyệt quay lại cấp 1, attempt_no = ' + o.attempt);
+  }
+
+  renderInbox();
+  showDecision(cls, title, desc);
+}
+
+/* ============================================================
+   10. SCR-11 — Quản trị
+   ============================================================ */
+function renderAdmin(){
+  var rows = '';
+  for (var i=0;i<DB.roles.length;i++){
+    var r = DB.roles[i];
+    rows += '<tr><td><b>' + esc(r.person) + '</b></td><td class="tiny mono">' + esc(r.email) + '</td>' +
+            '<td><span class="chip chip-violet">' + r.id + '</span></td><td class="tiny">' + esc(r.dept) + '</td>' +
+            '<td><span class="chip chip-good">active</span></td></tr>';
+  }
+  rows += '<tr><td><b>Nguyễn Cựu Nhân</b></td><td class="tiny mono">cuu.nhanvien@vxtech.vn</td><td><span class="chip chip-violet">INTERVIEWER</span></td><td class="tiny">Khối Công nghệ</td><td><span class="chip chip-danger">inactive</span></td></tr>';
+  $('#admin-users').innerHTML = rows;
+
+  var us = '', rs = '';
+  for (var u=0;u<DB.roles.length;u++){ us += '<option value="' + DB.roles[u].id + '">' + esc(DB.roles[u].person) + '</option>'; }
+  for (var v=0;v<DB.roles.length;v++){ rs += '<option value="' + DB.roles[v].id + '">' + DB.roles[v].id + ' — ' + esc(DB.roles[v].label) + '</option>'; }
+  $('#ad-user').innerHTML = us;
+  $('#ad-role').innerHTML = rs;
+  $('#ad-user').addEventListener('change', function(){ $('#ad-role').value = $('#ad-user').value; renderAdminPerms(); });
+  $('#ad-role').addEventListener('change', renderAdminPerms);
+  renderAdminPerms();
+}
+
+function renderAdminPerms(){
+  var sel = $('#ad-role');
+  if (!sel || !sel.value) return;
+  var list = DB.perms[sel.value] || [];
+  var html = '';
+  for (var i=0;i<list.length;i++){
+    html += '<li class="row" style="gap:7px;align-items:flex-start"><span class="chip chip-good" style="margin-top:2px">&nbsp;</span><span class="tiny" style="flex:1">' + esc(list[i]) + '</span></li>';
+  }
+  html += '<li class="row" style="gap:7px;align-items:flex-start"><span class="chip chip-danger" style="margin-top:2px">&nbsp;</span><span class="tiny dim" style="flex:1">Mọi tài nguyên không liệt kê ở trên đều bị từ chối (deny-by-default).</span></li>';
+  $('#ad-perms').innerHTML = html;
+}
+</script>
+<script>
+/* ============================================================
+   11. SCR-10 — 4 biểu đồ SVG sinh bằng JS từ dữ liệu giả
+   ============================================================ */
+var SVG_OPEN = '<svg viewBox="0 0 470 %H%" role="img" aria-label="%A%" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">';
+
+function svgWrap(h, label, inner){
+  return SVG_OPEN.replace('%H%', h).replace('%A%', label) + inner + '</svg>';
+}
+function txt(x, y, s, opt){
+  opt = opt || {};
+  return '<text x="' + x + '" y="' + y + '" fill="' + (opt.fill || 'var(--text-2)') + '" font-size="' + (opt.size || 11) + '"' +
+         (opt.weight ? ' font-weight="' + opt.weight + '"' : '') +
+         (opt.anchor ? ' text-anchor="' + opt.anchor + '"' : '') + '>' + s + '</text>';
+}
+
+function chartFunnel(){
+  var d = DB.reports.funnel;
+  var max = Math.max.apply(null, d.map(function(x){ return x.v; }));
+  var fills = ['var(--f1)', 'var(--f2)', 'var(--f3)', 'var(--f4)', 'var(--f5)'];
+  var rowH = 40, top = 14, inner = '';
+  for (var i=0;i<d.length;i++){
+    var name = d[i].k, val = d[i].v;
+    var y = top + i * rowH;
+    var w = Math.max(4, val / max * 168);
+    var conv = i === 0 ? '100%' : Math.round(val / d[i-1].v * 100) + '%';
+    inner += txt(0, y + 14, name, { size:11, fill:'var(--text-1)' });
+    inner += '<rect x="132" y="' + y + '" width="' + w + '" height="19" rx="4" fill="' + fills[i] + '"><title>' + name + ': ' + val + ' hồ sơ</title></rect>';
+    inner += txt(132 + w + 8, y + 14, String(val), { size:12, weight:650, fill:'var(--text-1)' });
+    inner += txt(470, y + 14, 'chuyển đổi ' + conv, { size:11, anchor:'end', fill:'var(--text-3)' });
+  }
+  return svgWrap(top + d.length * rowH, 'Biểu đồ phễu tuyển dụng theo 5 bước', inner);
+}
+
+function chartTth(){
+  var d = DB.reports.tth, target = DB.reports.tthTarget;
+  var max = Math.max.apply(null, d.map(function(x){ return x.v; }));
+  max = Math.ceil(Math.max(max, target) / 10) * 10;
+  var x0 = 34, x1 = 462, y0 = 12, y1 = 168, inner = '';
+  for (var g=0; g<=4; g++){
+    var gv = max / 4 * g, gy = y1 - (gv / max) * (y1 - y0);
+    inner += '<line x1="' + x0 + '" y1="' + gy + '" x2="' + x1 + '" y2="' + gy + '" stroke="var(--grid)" stroke-width="1"/>';
+    inner += txt(x0 - 6, gy + 4, String(Math.round(gv)), { size:10, anchor:'end', fill:'var(--text-3)' });
+  }
+  var band = (x1 - x0) / d.length, bw = Math.min(56, band * 0.5);
+  for (var i=0;i<d.length;i++){
+    var v = d[i].v;
+    var cx = x0 + band * i + band / 2;
+    var h = (v / max) * (y1 - y0);
+    inner += '<rect x="' + (cx - bw/2) + '" y="' + (y1 - h) + '" width="' + bw + '" height="' + h + '" rx="4" fill="var(--series-1)"><title>' + d[i].k + ': ' + v + ' ngày</title></rect>';
+    inner += txt(cx, y1 - h - 6, String(v), { size:12, weight:650, anchor:'middle', fill:'var(--text-1)' });
+    inner += txt(cx, y1 + 16, d[i].k.replace('Khối ', ''), { size:11, anchor:'middle' });
+  }
+  var ty = y1 - (target / max) * (y1 - y0);
+  inner += '<line x1="' + x0 + '" y1="' + ty + '" x2="' + x1 + '" y2="' + ty + '" stroke="var(--target)" stroke-width="2" stroke-dasharray="5 4"/>';
+  inner += txt(x1, ty - 6, 'mục tiêu ' + target + ' ngày', { size:10, anchor:'end', fill:'var(--target)' });
+  return svgWrap(y1 + 26, 'Biểu đồ cột time-to-hire trung bình theo phòng ban', inner);
+}
+
+function chartSrc(){
+  var d = DB.reports.src;
+  var max = Math.max.apply(null, d.map(function(x){ return x.hire; }));
+  var rowH = 36, top = 12, inner = '';
+  for (var i=0;i<d.length;i++){
+    var y = top + i * rowH;
+    var w = Math.max(4, d[i].hire / max * 200);
+    var rate = (d[i].hire / d[i].applied * 100).toFixed(1).replace('.', ',');
+    inner += txt(0, y + 14, d[i].k, { size:11, fill:'var(--text-1)' });
+    inner += '<rect x="112" y="' + y + '" width="' + w + '" height="19" rx="4" fill="var(--series-1)"><title>' + d[i].k + ': ' + d[i].hire + ' hire / ' + d[i].applied + ' hồ sơ</title></rect>';
+    inner += txt(112 + w + 8, y + 14, d[i].hire + ' hire', { size:12, weight:650, fill:'var(--text-1)' });
+    inner += txt(470, y + 14, d[i].applied + ' hồ sơ · ' + rate + '%', { size:11, anchor:'end', fill:'var(--text-3)' });
+  }
+  return svgWrap(top + d.length * rowH, 'Biểu đồ hiệu quả nguồn tuyển theo số ứng viên được tuyển', inner);
+}
+
+function chartSla(){
+  var d = DB.reports.sla, target = DB.reports.slaTarget;
+  var x0 = 34, x1 = 452, y0 = 14, y1 = 158, lo = 70, hi = 100, inner = '';
+  function yv(v){ return y1 - (v - lo) / (hi - lo) * (y1 - y0); }
+  for (var g=lo; g<=hi; g+=10){
+    inner += '<line x1="' + x0 + '" y1="' + yv(g) + '" x2="' + x1 + '" y2="' + yv(g) + '" stroke="var(--grid)" stroke-width="1"/>';
+    inner += txt(x0 - 6, yv(g) + 4, g + '%', { size:10, anchor:'end', fill:'var(--text-3)' });
+  }
+  inner += '<line x1="' + x0 + '" y1="' + yv(target) + '" x2="' + x1 + '" y2="' + yv(target) + '" stroke="var(--target)" stroke-width="2" stroke-dasharray="5 4"/>';
+  inner += txt(x1, yv(target) - 6, 'ngưỡng cam kết ' + target + '%', { size:10, anchor:'end', fill:'var(--target)' });
+  var step = (x1 - x0) / (d.length - 1), pts = [];
+  for (var i=0;i<d.length;i++){ pts.push((x0 + step * i) + ',' + yv(d[i].v)); }
+  inner += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+  for (var j=0;j<d.length;j++){
+    var cx = x0 + step * j, cy = yv(d[j].v);
+    inner += '<circle cx="' + cx + '" cy="' + cy + '" r="5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>' + d[j].k + ': ' + d[j].v + '% đúng hạn</title></circle>';
+    inner += txt(cx, y1 + 18, d[j].k, { size:11, anchor:'middle' });
+  }
+  inner += txt(x0 + step * (d.length - 1), yv(d[d.length-1].v) - 12, d[d.length-1].v + '%', { size:12, weight:650, anchor:'middle', fill:'var(--text-1)' });
+  return svgWrap(y1 + 28, 'Biểu đồ đường tỷ lệ đạt SLA phản hồi theo tháng', inner);
+}
+
+function tableFrom(head, rows){
+  var h = '<thead><tr>';
+  for (var i=0;i<head.length;i++) h += '<th' + (i ? ' class="right"' : '') + '>' + head[i] + '</th>';
+  h += '</tr></thead><tbody>';
+  for (var r=0;r<rows.length;r++){
+    h += '<tr>';
+    for (var c=0;c<rows[r].length;c++) h += '<td' + (c ? ' class="right mono"' : '') + '>' + rows[r][c] + '</td>';
+    h += '</tr>';
+  }
+  return h + '</tbody>';
+}
+
+function renderReports(){
+  $('#ch-funnel').innerHTML = chartFunnel();
+  $('#ch-tth').innerHTML = chartTth();
+  $('#ch-src').innerHTML = chartSrc();
+  $('#ch-sla').innerHTML = chartSla();
+
+  var f = DB.reports.funnel;
+  $('#tb-funnel').innerHTML = tableFrom(['Bước', 'Số hồ sơ'], f.map(function(x){ return [x.k, x.v]; }));
+  $('#tb-tth').innerHTML = tableFrom(['Phòng ban', 'Số ngày'], DB.reports.tth.map(function(x){ return [x.k, x.v]; }));
+  $('#tb-src').innerHTML = tableFrom(['Nguồn', 'Hồ sơ', 'Hire'], DB.reports.src.map(function(x){ return [x.k, x.applied, x.hire]; }));
+  $('#tb-sla').innerHTML = tableFrom(['Tháng', 'Đạt SLA (%)'], DB.reports.sla.map(function(x){ return [x.k, x.v]; }));
+}
+
+/* ============================================================
+   12. Kịch bản demo 6 bước — khớp Bảng 6.20 của docs/demo_runbook_D.md
+   ============================================================ */
+var DEMO = [
+  { name:'Đăng nhập SSO', tag:'NFR-04 · ADR-05 · ADR-10', role:'RECRUITER', screen:'scr-01',
+    note:'Đăng nhập một lần qua OIDC với Google Workspace nội bộ. Tài khoản đã bị vô hiệu hoá bị chặn ngay tại AuthService chứ không phải bị ẩn nút trên giao diện; đây là tiền đề của cả năm use case còn lại.',
+    run:function(){ closeModal(); } },
+  { name:'Sàng lọc CV', tag:'UC-02 · BR-21 · NFR-06', role:'RECRUITER', screen:'scr-03',
+    note:'Recruiter kéo thẻ ứng viên từ cột Đang sàng lọc sang cột Đã shortlist. Mỗi lần đổi cột là một transition của STATE-01, sinh đồng thời một dòng application_status_history và một dòng audit_logs.',
+    run:function(){ closeModal(); } },
+  { name:'Xếp lịch phỏng vấn', tag:'UC-01 · BR-03 · BR-26', role:'RECRUITER', screen:'scr-03',
+    note:'Chọn Vũ Ngọc Lan cùng khung 14:00 – 15:00 để hệ thống phát hiện trùng lịch, gợi ý 3 khung trống và bắt buộc nhập lý do trước khi cho phép ép xếp lịch. Kiểm tra xung đột và ghi lịch nằm trong cùng một vùng khoá phân tán.',
+    run:function(){ openSchedule(); var s = $('input[name="sch-slot"][value="s3"]'); if (s){ s.checked = true; evaluateSchedule(); } } },
+  { name:'Ghi feedback phỏng vấn', tag:'UC-03 · BR-15 · BR-06', role:'INTERVIEWER', screen:'scr-06',
+    note:'Interviewer chấm 5 tiêu chí theo thang 1–5; điểm trung bình được tính theo thời gian thực và nút submit chỉ mở khi mọi tiêu chí đều có nhận xét bằng lời. Sau khi submit, feedback bị khoá vĩnh viễn sau 24 giờ.',
+    run:function(){ closeModal(); resetScorecard(); } },
+  { name:'Tạo offer và duyệt offer vượt band', tag:'UC-04 · BR-08 · BR-16', role:'HEAD_OF_HR', screen:'scr-08',
+    note:'Trên SCR-07, chuỗi duyệt được tính lại mỗi khi mức lương đổi. Offer OFF-318 có mức 51.840.000 VND, vượt trần band 8% nên cần 2 cấp duyệt. Cấp 1 đã duyệt, Head of HR đang giữ quyền quyết định. Chọn Yêu cầu chỉnh sửa để thấy chuỗi duyệt quay lại cấp 1 và attempt_no tăng.',
+    run:function(){ closeModal(); state.selectedOffer = 'OFF-318'; renderInbox(); } },
+  { name:'Xem báo cáo tuyển dụng', tag:'UC-05 · NFR-10 · ADR-07', role:'HR_ADMIN', screen:'scr-10',
+    note:'Bốn biểu đồ được dựng từ read model làm mới mỗi 15 phút và đọc trên replica, nên truy vấn báo cáo không chạm cơ sở dữ liệu giao dịch. Dòng dataFreshness cho người dùng biết dữ liệu cũ bao lâu.',
+    run:function(){ closeModal(); } }
+];
+
+function gotoDemo(i){
+  if (i < 1) i = 1;
+  if (i > DEMO.length) i = DEMO.length;
+  state.demoStep = i;
+  var d = DEMO[i-1];
+  setRole(d.role, true);
+  showScreen(d.screen);
+  if (d.run) d.run();
+  $('#db-idx').textContent = i;
+  $('#db-name').textContent = d.name;
+  $('#an-tag').textContent = d.tag;
+  $('#an-title').textContent = 'Bước ' + i + ' — ' + d.name;
+  $('#an-note').textContent = d.note;
+  $('#annot').hidden = !state.annot;
+}
+
+function stopDemo(){
+  if (state.demoTimer){ clearInterval(state.demoTimer); state.demoTimer = null; }
+  $('#db-run').textContent = 'Chạy kịch bản demo';
+}
+
+function runDemo(){
+  if (state.demoTimer){ stopDemo(); return; }
+  gotoDemo(1);
+  $('#db-run').textContent = 'Dừng kịch bản';
+  state.demoTimer = setInterval(function(){
+    if (state.demoStep >= DEMO.length){ stopDemo(); toast('Kết thúc kịch bản demo — đã đi qua 6 bước: đăng nhập, UC-02, UC-01, UC-03, UC-04, UC-05', 'good'); return; }
+    gotoDemo(state.demoStep + 1);
+  }, 5200);
+}
+
+/* ============================================================
+   13. Gắn sự kiện + khởi tạo
+   ============================================================ */
+function wire(){
+  /* Bộ chọn vai trò */
+  var rs = '', ls = '';
+  for (var i=0;i<DB.roles.length;i++){
+    rs += '<option value="' + DB.roles[i].id + '">' + esc(DB.roles[i].label) + '</option>';
+    ls += '<option value="' + DB.roles[i].id + '">' + esc(DB.roles[i].label) + ' — ' + esc(DB.roles[i].person) + '</option>';
+  }
+  $('#role-select').innerHTML = rs;
+  $('#lg-role').innerHTML = ls;
+  $('#role-select').addEventListener('change', function(){ setRole($('#role-select').value); });
+
+  /* SCR-01 */
+  $('#lg-go').addEventListener('click', function(){
+    $('#lg-error').hidden = true;
+    setRole($('#lg-role').value, true);
+    showScreen(firstAllowed());
+    toast('Đăng nhập thành công qua OIDC — phiên làm việc lưu trong Redis (ADR-03)', 'good');
+  });
+  $('#lg-fail').addEventListener('click', function(){
+    $('#lg-email').value = 'cuu.nhanvien@vxtech.vn';
+    $('#lg-error').hidden = false;
+  });
+  $('#btn-logout').addEventListener('click', function(){ showScreen('scr-01'); });
+  $('#btn-lang').addEventListener('click', function(){ toast('Toàn bộ nhãn giao diện và template email đều có bản VI và EN (NFR-09)'); });
+  $('#btn-bell').addEventListener('click', function(){ toast('4 thông báo trong ứng dụng: 2 feedback quá hạn, 1 offer chờ duyệt, 1 lịch chờ xác nhận'); });
+
+  /* SCR-02 */
+  $('#btn-dash-empty').addEventListener('click', function(){ $('#dash-full').hidden = true; $('#dash-empty').hidden = false; });
+  $('#btn-dash-full').addEventListener('click', function(){ $('#dash-full').hidden = false; $('#dash-empty').hidden = true; });
+
+  /* SCR-05 */
+  $('#sch-close').addEventListener('click', closeModal);
+  $('#sch-cancel').addEventListener('click', closeModal);
+  $('#sch-confirm').addEventListener('click', function(){
+    var over = !$('#sch-override').hidden;
+    closeModal();
+    showScreen('scr-03');
+    if (over) toast('Đã ép xếp lịch kèm lý do — ghi audit log và thông báo cho người phỏng vấn (BR-26)', 'good');
+    else toast('Đã tạo Interview SCHEDULED, gửi thư mời và đặt hạn xác nhận 24h (BR-05)', 'good');
+  });
+  document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') closeModal(); });
+
+  /* SCR-06 */
+  $('#sc-submit').addEventListener('click', submitScorecard);
+  $('#sc-reset').addEventListener('click', resetScorecard);
+
+  /* SCR-07 */
+  $('#ow-prev').addEventListener('click', function(){ setWizardStep(wizard.step - 1); });
+  $('#ow-next').addEventListener('click', function(){ setWizardStep(wizard.step + 1); });
+  $('#ow-salary').addEventListener('input', function(){ renderChain(Number($('#ow-salary').value || 0)); });
+  // Người dùng tự sửa ghi chú thì không tự động ghi đè nữa.
+  $('#ow-note').addEventListener('input', function(){ this.dataset.touched = '1'; });
+  $$('[data-salary]').forEach(function(b){
+    b.addEventListener('click', function(){
+      $('#ow-salary').value = b.getAttribute('data-salary');
+      renderChain(Number(b.getAttribute('data-salary')));
+      setWizardStep(2);
+    });
+  });
+  $('#ow-send').addEventListener('click', function(){
+    $('#ow-send-form').hidden = true;
+    $('#ow-sent').hidden = false;
+    $('#ow-status').textContent = 'Chờ duyệt';
+    $('#ow-status').className = 'chip chip-warn';
+    toast('Offer OFF-318 đã gửi duyệt — bản ghi outbox được tạo cùng transaction (ADR-06)', 'good');
+  });
+  $('#ow-restart').addEventListener('click', function(){
+    $('#ow-send-form').hidden = false;
+    $('#ow-sent').hidden = true;
+    $('#ow-status').textContent = 'Bản nháp';
+    $('#ow-status').className = 'chip chip-neutral';
+    setWizardStep(1);
+  });
+
+  /* SCR-09 */
+  $('#pt-confirm').addEventListener('click', function(){
+    $('#pt-sched').hidden = true;
+    $('#pt-sched-done').hidden = false;
+    $('#pt-sched-chip').textContent = 'Đã xác nhận 15/08/2026 20:12';
+    $('#pt-sched-chip').className = 'chip chip-good';
+    toast('Cảm ơn bạn đã xác nhận lịch phỏng vấn', 'good');
+  });
+  $('#pt-reschedule').addEventListener('click', function(){ toast('Đã gửi đề nghị đổi lịch tới nhà tuyển dụng — hồ sơ chuyển sang trạng thái chờ xếp lại lịch'); });
+  $('#pt-accept').addEventListener('click', function(){ portalOffer('good', 'Bạn đã đồng ý nhận việc', 'Hồ sơ chuyển sang ACCEPTED. Các hồ sơ khác của bạn tại VXTech chuyển ON_HOLD trong lúc chờ xác nhận ngày onboard (BR-10). Liên kết mời hiện tại đã hết hiệu lực.'); });
+  $('#pt-decline').addEventListener('click', function(){ portalOffer('danger', 'Bạn đã từ chối thư mời', 'Hồ sơ chuyển sang DECLINED. Cảm ơn bạn đã dành thời gian tham gia quy trình tuyển dụng của VXTech.'); });
+  $('#pt-counter').addEventListener('click', function(){ $('#pt-counter-box').hidden = false; });
+  $('#pt-counter-cancel').addEventListener('click', function(){ $('#pt-counter-box').hidden = true; });
+  $('#pt-counter-send').addEventListener('click', function(){
+    var v = Number($('#pt-counter-amount').value || 0);
+    $('#pt-counter-box').hidden = true;
+    portalOffer('warn', 'Đã gửi đề nghị mức ' + vnd(v),
+      'Hồ sơ chuyển sang NEGOTIATING và nhà tuyển dụng nhận được thông báo (UC-06). Nếu công ty đồng ý, một thư mời mới sẽ được tạo và đi lại toàn bộ chuỗi duyệt từ cấp 1.');
+  });
+
+  /* SCR-10 */
+  $('#btn-rp-empty').addEventListener('click', function(){ $('#rp-full').hidden = true; $('#rp-empty').hidden = false; });
+  $('#btn-rp-full').addEventListener('click', function(){ $('#rp-full').hidden = false; $('#rp-empty').hidden = true; });
+  $('#btn-rp-table').addEventListener('click', function(){
+    var hidden = $$('.rp-table')[0].hidden;
+    $$('.rp-table').forEach(function(t){ t.hidden = !hidden; });
+    $('#btn-rp-table').textContent = hidden ? 'Ẩn bảng số liệu' : 'Hiện bảng số liệu';
+  });
+
+  /* SCR-11 */
+  $('#ad-save').addEventListener('click', function(){ toast('Đã cập nhật phân quyền cho ' + $('#ad-user').options[$('#ad-user').selectedIndex].text + ' — ghi audit log kèm giá trị trước và sau', 'good'); });
+
+  /* Thanh công cụ demo */
+  $('#db-run').addEventListener('click', runDemo);
+  $('#db-prev').addEventListener('click', function(){ stopDemo(); gotoDemo(Math.max(1, state.demoStep - 1)); });
+  $('#db-next').addEventListener('click', function(){ stopDemo(); gotoDemo(state.demoStep < 1 ? 1 : state.demoStep + 1); });
+  $('#db-annot').addEventListener('click', function(){
+    state.annot = !state.annot;
+    $('#annot').hidden = !state.annot || state.demoStep < 1;
+    $('#db-annot').textContent = state.annot ? 'Tắt lớp phủ chú thích' : 'Bật lớp phủ chú thích';
+  });
+}
+
+function portalOffer(kind, title, desc){
+  var box = $('#pt-offer-result');
+  box.hidden = false;
+  box.className = 'alert alert-' + (kind === 'good' ? 'good' : kind === 'danger' ? 'danger' : 'warn');
+  $('#pt-offer-result-t').textContent = title;
+  $('#pt-offer-result-d').textContent = desc;
+  $('#pt-offer-actions').hidden = true;
+  $('#pt-status').textContent = kind === 'good' ? 'Đã nhận việc' : kind === 'danger' ? 'Đã từ chối' : 'Đang đàm phán';
+  $('#pt-status').className = 'chip ' + (kind === 'good' ? 'chip-good' : kind === 'danger' ? 'chip-danger' : 'chip-warn');
+  toast(title, kind === 'danger' ? 'danger' : 'good');
+}
+
+function init(){
+  wire();
+  renderDashboard();
+  renderKanban();
+  renderSchedule();
+  renderScorecard();
+  renderChain(Number($('#ow-salary').value || 0));
+  setWizardStep(1);
+  renderAdmin();
+  renderInbox();
+  renderReports();
+  applyRbac();
+  showScreen('scr-01');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
