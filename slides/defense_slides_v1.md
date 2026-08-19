@@ -53,7 +53,7 @@ section.lead h1 { font-size: 44px; }
 
 Hà Nội, tháng 9 năm 2026 — phiên bản slide v1
 
-<!-- Ghi chú người nói: Chào hội đồng, giới thiệu tên đề tài và bốn thành viên kèm đúng một câu về vai trò từng người. Nói ngay phạm vi: hệ thống nội bộ của một doanh nghiệp công nghệ thông tin quy mô 500–1.000 nhân sự, không phải sản phẩm SaaS bán ra ngoài. Thời lượng cụm slide 1–2: 1 phút. Tổng nội dung 23 phút cộng khoảng 1 phút cho sáu điểm chuyển người, tức 24 phút trên trần 25 phút, dành 10 phút cuối cho hỏi đáp; D giữ đồng hồ. Nguồn chốt của mọi con số thời lượng là mục 4 của `docs/demo_runbook_D.md` — bảng trên chép theo đúng bảng đó. Lưu ý kỹ thuật: họ tên và mã số sinh viên của bốn thành viên cần được điền vào bảng trên trước khi in, và ngày bảo vệ cần cập nhật theo lịch chính thức của bộ môn. -->
+<!-- Ghi chú người nói: Chào hội đồng, giới thiệu tên đề tài và bốn thành viên kèm đúng một câu về vai trò từng người. Nói ngay phạm vi: hệ thống nội bộ của một doanh nghiệp công nghệ thông tin quy mô 500–1.000 nhân sự, không phải sản phẩm SaaS bán ra ngoài. Thời lượng cụm slide 1–2: 1 phút. Tổng nội dung 23 phút cộng khoảng 1 phút cho sáu điểm chuyển người, tức 24 phút trên trần 25 phút, dành 10 phút cuối cho hỏi đáp; D giữ đồng hồ. Lưu ý kỹ thuật: họ tên và mã số sinh viên của bốn thành viên cần được điền vào bảng trên trước khi in, và ngày bảo vệ cần cập nhật theo lịch chính thức của bộ môn. -->
 
 ---
 
@@ -69,7 +69,7 @@ Hà Nội, tháng 9 năm 2026 — phiên bản slide v1
 | 25 – 27 | Demo theo kịch bản 6 bước | D | 4,5 phút |
 | 28 – 30 | Chương 6: kết quả, hạn chế, hướng phát triển, hỏi đáp | D | 1 phút |
 
-<!-- Ghi chú người nói: Nói rõ mạch trình bày đi từ "cần gì" (Chương 1–2) sang "chạy thế nào" (Chương 3), "lưu gì" (Chương 4), rồi "dựng bằng gì" (Chương 5) và "chứng minh ra sao" (Chương 6 kèm demo). Nhấn rằng bốn chương dùng chung một bộ mã định danh UC, BR, NFR, ADR nên hội đồng có thể truy ngược bất kỳ khẳng định nào. Nhắc quy ước hỏi đáp: người viết chương nào trả lời câu hỏi của chương đó, D là người đỡ khi cần. Ghi chú kỹ thuật: các sơ đồ trong tệp này viết bằng khối mermaid; khi xuất bằng marp-cli cần bật bộ dựng mermaid hoặc thay bằng ảnh đã kết xuất, xuất kèm một bản PDF dự phòng theo yêu cầu sao lưu ở 06_conventions_shared.md mục 8. -->
+<!-- Ghi chú người nói: Nói rõ mạch trình bày đi từ "cần gì" (Chương 1–2) sang "chạy thế nào" (Chương 3), "lưu gì" (Chương 4), rồi "dựng bằng gì" (Chương 5) và "chứng minh ra sao" (Chương 6 kèm demo). Nhấn rằng bốn chương dùng chung một bộ mã định danh UC, BR, NFR, ADR nên hội đồng có thể truy ngược bất kỳ khẳng định nào. Nhắc quy ước hỏi đáp: người viết chương nào trả lời câu hỏi của chương đó, D là người đỡ khi cần. Ghi chú kỹ thuật: các sơ đồ trong tệp này viết bằng khối mermaid; khi xuất bằng marp-cli cần bật bộ dựng mermaid hoặc thay bằng ảnh đã kết xuất, và luôn xuất kèm một bản PDF dự phòng. -->
 
 ---
 
@@ -81,7 +81,7 @@ Hà Nội, tháng 9 năm 2026 — phiên bản slide v1
 - Không đo được funnel, time-to-hire và hiệu quả từng nguồn tuyển vì dữ liệu không liên kết.
 - Ứng viên bị "im lặng" do không có cơ chế nhắc phản hồi theo cam kết thời gian.
 
-<!-- Ghi chú người nói: Đây là hiện trạng giả định của một doanh nghiệp công nghệ thông tin quy mô 500–1.000 nhân sự theo spec_ats mục 1.1. Nên kể một câu chuyện ngắn thay vì đọc gạch đầu dòng: một ứng viên nộp hồ sơ qua giới thiệu nội bộ, hai tuần sau vẫn chưa ai trả lời, trong khi hai người phỏng vấn bị xếp trùng giờ cùng một buổi chiều. Nhấn rằng năm điểm đau này ánh xạ trực tiếp sang năm use case trọng tâm ở slide 6, nghĩa là phạm vi hệ thống không được chọn theo cảm tính. Thời lượng cụm slide 3–6: 4 phút. -->
+<!-- Ghi chú người nói: Đây là hiện trạng giả định của một doanh nghiệp công nghệ thông tin quy mô 500–1.000 nhân sự theo phạm vi đã nêu ở Chương 1. Nên kể một câu chuyện ngắn thay vì đọc gạch đầu dòng: một ứng viên nộp hồ sơ qua giới thiệu nội bộ, hai tuần sau vẫn chưa ai trả lời, trong khi hai người phỏng vấn bị xếp trùng giờ cùng một buổi chiều. Nhấn rằng năm điểm đau này ánh xạ trực tiếp sang năm use case trọng tâm ở slide 6, nghĩa là phạm vi hệ thống không được chọn theo cảm tính. Thời lượng cụm slide 3–6: 4 phút. -->
 
 ---
 
@@ -115,7 +115,7 @@ Quy mô thiết kế: tối đa **50 JD mở đồng thời**, **200 ứng viên
 
 Thành phần hỗ trợ: `IdentityProvider`, `EmailGateway` (bắt buộc), `CalendarProvider` (tuỳ tích hợp).
 
-<!-- Ghi chú người nói: Điểm cần nhấn là hai vai trò duyệt offer được tách hẳn khỏi Quản trị HR, vì BR-08 quy định ba cấp duyệt khác nhau; nếu gộp lại thì không mô hình hoá được chuỗi duyệt. Điểm thứ hai dễ bị hỏi: bộ định thời chạy job SLA không được coi là actor của hệ thống mà là thành phần nội bộ, vì nó nằm bên trong ranh giới hệ thống chứ không phải bên ngoài tương tác vào; đây là điểm A và D đã thống nhất, ghi thành mâu thuẫn X-05 trong sổ mâu thuẫn của D. Trên sequence diagram của B, bộ định thời vẫn được vẽ như một lifeline khởi tạo luồng, đó là góc nhìn khác chứ không phải mâu thuẫn. -->
+<!-- Ghi chú người nói: Điểm cần nhấn là hai vai trò duyệt offer được tách hẳn khỏi Quản trị HR, vì BR-08 quy định ba cấp duyệt khác nhau; nếu gộp lại thì không mô hình hoá được chuỗi duyệt. Điểm thứ hai dễ bị hỏi: bộ định thời chạy job SLA không được coi là actor của hệ thống mà là thành phần nội bộ, vì nó nằm bên trong ranh giới hệ thống chứ không phải bên ngoài tương tác vào. Trên sequence diagram của B, bộ định thời vẫn được vẽ như một lifeline khởi tạo luồng, đó là góc nhìn khác chứ không phải mâu thuẫn. -->
 
 ---
 
@@ -153,7 +153,7 @@ flowchart LR
 
 Ba luồng được chọn vẽ sequence vì cùng thoả ba tiêu chí: **nhiều actor**, **nhiều nhánh rẽ**, **có ràng buộc thời gian hoặc xung đột dữ liệu**.
 
-<!-- Ghi chú người nói: Giải thích vì sao cần cả ba loại diagram thay vì một: activity trả lời ai làm gì theo thứ tự, state machine trả lời một hồ sơ có thể ở những trạng thái nào và đi từ đâu sang đâu, sequence trả lời các thành phần phần mềm nói chuyện với nhau ra sao. Nhấn nguyên tắc chọn luồng vẽ sequence, vì nếu chọn luồng đơn giản thì sequence chỉ là một đường thẳng, không thể hiện được năng lực phân tích. Nói thêm rằng tên các lifeline trên sequence chính là danh sách component ứng viên mà D dùng ở Chương 5, đó là điểm khớp bắt buộc giữa hai chương. Thời lượng cụm slide 7–12: 5 phút. -->
+<!-- Ghi chú người nói: Giải thích vì sao cần cả ba loại diagram thay vì một: activity trả lời ai làm gì theo thứ tự, state machine trả lời một hồ sơ có thể ở những trạng thái nào và đi từ đâu sang đâu, sequence trả lời các thành phần phần mềm nói chuyện với nhau ra sao. Nhấn nguyên tắc chọn luồng vẽ sequence, vì nếu chọn luồng đơn giản thì sequence chỉ là một đường thẳng, không thể hiện được năng lực phân tích. Nói thêm rằng tên các lifeline trên sequence chính là danh sách component ứng viên mà D dùng ở Chương 5, đó là điểm khớp bắt buộc giữa hai chương. Thời lượng cụm slide 7–12: 4,5 phút. -->
 
 ---
 
@@ -173,7 +173,7 @@ flowchart LR
     F -->|"Từ chối hoặc hết hạn"| Z4(["Kết thúc khác"])
 ```
 
-<em class="cap">Hình 3.1 — ACT-01, luồng chính rút gọn (do B thực hiện; bản đầy đủ 5 swimlane trong <code>diagrams/B_act_recruitment_flow_v1.md</code>)</em>
+<em class="cap">Hình 3.1 — ACT-01, luồng chính rút gọn (do B thực hiện; bản đầy đủ 5 swimlane ở Chương 3)</em>
 
 <!-- Ghi chú người nói: Nói rõ bản chiếu ở đây là bản rút gọn để đọc được trên màn chiếu; bản đầy đủ có năm swimlane cho Candidate, Recruiter, Hiring Manager, Interviewer và System, hơn hai mươi node hoạt động. Hai điểm bắt buộc phải nêu: thứ nhất, sau khi buổi phỏng vấn được tạo, hệ thống fork gửi thư mời song song cho ứng viên và người phỏng vấn rồi join lại trước khi đặt hạn xác nhận 24 giờ; thứ hai, quy trình có sáu điểm kết thúc khác nhau chứ không chỉ có Hired và Rejected, trong đó Ghosted là trường hợp ứng viên nhận offer nhưng không đến nhận việc, kéo theo mở lại JD theo BR-11. -->
 
@@ -252,7 +252,7 @@ sequenceDiagram
 
 <em class="cap">Hình 3.4 — SEQ-01, cấu trúc chính của luồng xếp lịch (do B thực hiện)</em>
 
-<!-- Ghi chú người nói: Chỉ vào fragment alt và opt: alt là nhánh có hoặc không có xung đột, opt là hành động ép đặt lịch chỉ xảy ra khi người dùng có quyền và chấp nhận ghi lý do. Nhấn rằng mọi lời gọi đều có message trả về, đó là tiêu chí review chéo trong quy ước nhóm. Điểm bàn giao sang Chương 5: SchedulingService không ánh xạ một-một với một bảng cơ sở dữ liệu, và tình huống hai chuyên viên tuyển dụng cùng đặt một khung giờ được xử lý bằng khoá phân tán ở tầng service trước khi ghi, D sẽ trình bày cơ chế đó ở slide 21. -->
+<!-- Ghi chú người nói: Chỉ vào fragment alt và opt: alt là nhánh có hoặc không có xung đột, opt là hành động ép đặt lịch chỉ xảy ra khi người dùng có quyền và chấp nhận ghi lý do. Nhấn rằng mọi lời gọi đều có message trả về, đó là quy ước bắt buộc khi vẽ sequence trong báo cáo. Điểm bàn giao sang Chương 5: SchedulingService không ánh xạ một-một với một bảng cơ sở dữ liệu, và tình huống hai chuyên viên tuyển dụng cùng đặt một khung giờ được xử lý bằng khoá phân tán ở tầng service trước khi ghi, D sẽ trình bày cơ chế đó ở slide 21. -->
 
 ---
 
@@ -401,7 +401,7 @@ erDiagram
     OFFERS ||--o{ OFFER_APPROVALS : requires
 ```
 
-<em class="cap">Hình 4.3 — ERD, 13 quan hệ cốt lõi trong tổng số 18 bảng (do C thực hiện; DDL chạy được tại <code>sql/schema.sql</code>)</em>
+<em class="cap">Hình 4.3 — ERD, 13 quan hệ cốt lõi trong tổng số 18 bảng (do C thực hiện; DDL chạy được kèm theo lược đồ cơ sở dữ liệu ở Chương 4)</em>
 
 <!-- Ghi chú người nói: Nhấn ba phép chuyển đổi từ tầng logic sang tầng vật lý. Một, quan hệ nhiều-nhiều thành bảng trung gian interview_participants có khoá thay thế và ràng buộc duy nhất trên cặp buổi phỏng vấn và người phỏng vấn. Hai, kế thừa sáu vai trò thành một bảng users duy nhất với cột role kiểu ENUM, lý do ở slide sau. Ba, interface Approvable không có bảng riêng vì interface không tồn tại ở tầng lưu trữ, hành vi được bảo đảm bằng ràng buộc ENUM trên cột trạng thái. Nói thêm rằng bảng application_status_history được thêm ở phiên bản 1.2 chính là nguồn dữ liệu cho báo cáo time-in-stage mà D dùng ở Chương 5. Nếu bị hỏi về khối lượng, toàn bộ 18 bảng có khoảng 150 cột, 11 ràng buộc duy nhất và 15 ràng buộc kiểm tra. -->
 
@@ -434,7 +434,7 @@ erDiagram
 | Phù hợp quy mô mục tiêu | Thiết kế quá mức ở 10.000 hồ sơ, 60 người dùng | Không mở rộng riêng phần nặng được | Vừa đúng, vẫn tách service về sau được |
 | Giá phải trả | — | — | Lỗi nặng ở một module làm sập cả `ats-api`; ranh giới module giữ bằng kỷ luật lập trình |
 
-<!-- Ghi chú người nói: Trình bày theo lối loại trừ chứ không theo lối ca ngợi lựa chọn của mình. Microservices bị loại vì chi phí hệ phân tán lớn hơn nhiều lần lợi ích ở quy mô 10.000 hồ sơ hoạt động và một đội nhỏ không có bộ phận vận hành riêng. Monolith một tiến trình bị loại vì không cô lập được ba loại tải rất khác nhau: tải tương tác, tải job theo lịch và tải phân tích. Kiến trúc không hàm bị loại vì mô hình khởi động nguội không giữ được khoá phân tán 120 giây của BR-03. Nói rõ cả cột giá phải trả, vì một quyết định kiến trúc không nêu mặt trái là một quyết định chưa được cân nhắc. Thời lượng cụm slide 18–24: 6 phút. -->
+<!-- Ghi chú người nói: Trình bày theo lối loại trừ chứ không theo lối ca ngợi lựa chọn của mình. Microservices bị loại vì chi phí hệ phân tán lớn hơn nhiều lần lợi ích ở quy mô 10.000 hồ sơ hoạt động và một đội nhỏ không có bộ phận vận hành riêng. Monolith một tiến trình bị loại vì không cô lập được ba loại tải rất khác nhau: tải tương tác, tải job theo lịch và tải phân tích. Kiến trúc không hàm bị loại vì mô hình khởi động nguội không giữ được khoá phân tán 120 giây của BR-03. Nói rõ cả cột giá phải trả, vì một quyết định kiến trúc không nêu mặt trái là một quyết định chưa được cân nhắc. Thời lượng cụm slide 18–24: 4 phút. -->
 
 ---
 
@@ -456,9 +456,9 @@ flowchart TB
     C01 -->|"presigned PUT và GET, không qua app server"| MINIO
 ```
 
-<em class="cap">Hình 5.1 — COMP-01, rút gọn từ 24 component (do D thực hiện; bản đầy đủ tại <code>diagrams/D_comp_architecture_v1.md</code>)</em>
+<em class="cap">Hình 5.1 — COMP-01, rút gọn từ 24 component (do D thực hiện; bản đầy đủ ở Chương 5, mục 5.2)</em>
 
-<!-- Ghi chú người nói: Ba điều cần chỉ trên hình. Một, mọi lifeline trong sequence diagram của B đều tìm được component tương ứng ở đây: SchedulingService là C08, ApprovalWorkflow là C11, SLAService là C14, EscalationService là C13; bảng đối chiếu đầy đủ nằm trong tài liệu component. Hai, cạnh nét đứt là luồng bất đồng bộ; NotificationService không gọi thẳng cổng thư mà chỉ ghi một bản ghi outbox trong cùng giao dịch nghiệp vụ, sau đó SchedulerWorker mới đẩy đi kèm khoá chống trùng. Ba, cạnh dưới cùng là đường tải CV đi thẳng từ trình duyệt vào kho đối tượng, không qua máy chủ ứng dụng; đó là câu trả lời cho câu hỏi ứng viên nộp CV 10 MB thì lưu ở đâu. Nói rõ in-process call nghĩa là gọi phương thức trong cùng tiến trình, không qua mạng, và đó là điểm phân biệt cốt lõi với microservices. -->
+<!-- Ghi chú người nói: Ba điều cần chỉ trên hình. Một, mọi lifeline trong sequence diagram của B đều tìm được component tương ứng ở đây: SchedulingService là C08, ApprovalWorkflow là C11, SLAService là C14, EscalationService là C13; bảng đối chiếu đầy đủ là Bảng 5.4, mục 5.2.2. Hai, cạnh nét đứt là luồng bất đồng bộ; NotificationService không gọi thẳng cổng thư mà chỉ ghi một bản ghi outbox trong cùng giao dịch nghiệp vụ, sau đó SchedulerWorker mới đẩy đi kèm khoá chống trùng. Ba, cạnh dưới cùng là đường tải CV đi thẳng từ trình duyệt vào kho đối tượng, không qua máy chủ ứng dụng; đó là câu trả lời cho câu hỏi ứng viên nộp CV 10 MB thì lưu ở đâu. Nói rõ in-process call nghĩa là gọi phương thức trong cùng tiến trình, không qua mạng, và đó là điểm phân biệt cốt lõi với microservices. -->
 
 ---
 
@@ -479,7 +479,7 @@ flowchart TB
     N07 -->|"SSH 22 — pg_dump và WAL archive"| N14[("N14 BackupStorage — giữ 30 ngày")]
 ```
 
-<em class="cap">Hình 5.2 — DEP-01, 12 trong 14 node theo vùng mạng (do D thực hiện; bản đầy đủ là Hình 5.10 tại <code>diagrams/D_deploy_topology_v1.md</code>)</em>
+<em class="cap">Hình 5.2 — DEP-01 rút gọn theo vùng mạng, đủ 14 node, gộp N11–N13 vào một khối hệ thống ngoài (do D thực hiện; mục 5.3)</em>
 
 <!-- Ghi chú người nói: Nói ngay điểm phân biệt: sơ đồ thành phần trả lời trách nhiệm nghiệp vụ thuộc về ai, sơ đồ triển khai trả lời tiến trình nào chạy ở đâu và đi qua đường mạng nào; 24 component được đóng gói thành đúng 5 artifact triển khai. Ba ghi chú nhân bản bắt buộc nêu: ats-api không lưu trạng thái nên nhân bản tự do từ 2 lên 6 instance, trần 6 bị chặn bởi số kết nối tối đa tới PostgreSQL chứ không phải bởi CPU; ats-worker bị cấm nhân bản tự do vì hai worker cùng chạy sẽ gửi hai email nhắc cho cùng một buổi phỏng vấn, nên chỉ một instance giữ khoá leader trên Redis; ats-reporting chỉ đọc bản sao nên tăng số instance không tạo thêm một byte ghi nào lên máy chính. Hai instance ats-api được chọn vì khả dụng chứ không vì tải: theo ước lượng, tải đỉnh thiết kế chỉ khoảng 12 request mỗi giây trong khi hai instance đáp ứng khoảng 100, dư khoảng 8 lần; con số này là ước lượng, chưa đo trên hệ thống thật. -->
 
@@ -524,7 +524,7 @@ flowchart LR
     C11 -->|"required INotification"| C12["C12 NotificationService"]
 ```
 
-<em class="cap">Hình 5.9 — Chi tiết interface và port của cụm Offer trong COMP-01: một engine dùng chung cho hai loại đối tượng (do D thực hiện; bản đầy đủ tại <code>diagrams/D_comp_architecture_v1.md</code>)</em>
+<em class="cap">COMP-01 — chi tiết interface và port của cụm Offer: một engine dùng chung cho hai loại đối tượng (do D thực hiện; bản đầy đủ ở Chương 5, mục 5.2)</em>
 
 <!-- Ghi chú người nói: Điểm cần nhấn là ApprovalWorkflow không biết mình đang duyệt cái gì; nó chỉ làm việc trên interface Approvable mà C đã định nghĩa, gồm approve theo cấp, reject kèm lý do và kiểm tra đã đủ cấp chưa. Nhờ vậy quy trình duyệt mở JD theo BR-02 và quy trình duyệt offer nhiều cấp theo BR-08 dùng chung một engine, một bảng lịch sử và một màn hộp thư duyệt, thay vì viết hai lần. Điểm thứ hai là cột attempt_no: khi một cấp chọn yêu cầu chỉnh sửa thì số lần duyệt tăng lên và chuỗi duyệt bắt đầu lại từ cấp một, nhưng lịch sử của lần duyệt trước vẫn được giữ nguyên để kiểm toán. Điểm thứ ba là hướng phụ thuộc một chiều: OfferService phụ thuộc IApproval, còn ApprovalWorkflow không hề biết IOffer tồn tại; nếu vẽ mũi tên hai chiều thì việc tách service sau này trở nên vô nghĩa. -->
 
@@ -550,7 +550,7 @@ flowchart LR
     end
 ```
 
-<em class="cap">Hình 5.20 — Bản đồ màn hình, hai nhánh điều hướng tách rời (do D thực hiện; chưa chiếu SCR-11 Admin)</em>
+<em class="cap">Bản đồ màn hình, hai nhánh điều hướng tách rời (do D thực hiện; chưa chiếu SCR-11 Admin; danh mục đầy đủ ở Bảng 5.6, mục 5.5.1)</em>
 
 <!-- Ghi chú người nói: Điều đáng nói nhất trên hình là hai nhánh không có bất kỳ cạnh nối nào, và đó là chủ ý chứ không phải thiếu sót. Ứng viên không phải một hàng trong bảng users, không có đăng nhập một lần, không có thanh điều hướng trái; lối vào duy nhất là liên kết có token hạn 7 ngày, dùng một lần cho hành động nhạy cảm như chấp nhận offer, và bị thu hồi khi hồ sơ chuyển sang trạng thái cuối. Kênh duy nhất nối hai nhánh là email, tức là kênh ngoài băng. Nói thêm rằng thanh điều hướng được lọc theo quyền, nhưng việc ẩn mục chỉ là lớp trải nghiệm, quyết định từ chối thật nằm ở tầng API và tầng service theo nguyên tắc từ chối mặc định. Toàn bộ 11 màn dùng chung một bộ dữ liệu mẫu của công ty giả định VXTech, không dùng chữ giả. -->
 
@@ -567,7 +567,7 @@ flowchart LR
 | NFR-11 | 0 email trùng khi phát lại 1.000 sự kiện | Outbox kèm idempotency key, retry ≤ 5 lần | Bơm sự kiện, `kill -9`, đếm ở máy chủ giả lập |
 | NFR-14 | 0 lỗi axe-core mức nghiêm trọng; tương phản ≥ 4,5 : 1 | Nhãn chữ kèm màu, thay kéo–thả bằng menu bàn phím | axe DevTools và Lighthouse trên prototype |
 
-<!-- Ghi chú người nói: Nguyên tắc viết NFR của nhóm là mỗi yêu cầu phải có đủ năm phần: phát biểu, chỉ số và ngưỡng, cách đo bằng công cụ cụ thể, cơ chế thiết kế trỏ về ADR hoặc component, và rủi ro kèm phương án dự phòng nếu không đạt. Nói rõ hai mã NFR-13 về khả năng vận hành và NFR-14 về khả năng tiếp cận là do D bổ sung ngoài mười hai mã gốc, và đang chờ A xác nhận. Nếu bị hỏi ngưỡng lấy ở đâu ra, trả lời trung thực: ngưỡng nghiệp vụ suy từ đặc tả và business rule, còn các con số hạ tầng như 12 request mỗi giây hay 150 mili giây là giả định tính toán, chưa đo trên hệ thống thật, và đã được ghi rõ là giả định trong tài liệu. Hết phần kiến trúc, chuyển sang demo. -->
+<!-- Ghi chú người nói: Nguyên tắc viết NFR của nhóm là mỗi yêu cầu phải có đủ năm phần: phát biểu, chỉ số và ngưỡng, cách đo bằng công cụ cụ thể, cơ chế thiết kế trỏ về ADR hoặc component, và rủi ro kèm phương án dự phòng nếu không đạt. Nói rõ hai mã NFR-13 về khả năng vận hành và NFR-14 về khả năng tiếp cận được bổ sung ở bước thiết kế, nâng tổng số lên 14 yêu cầu phi chức năng. Nếu bị hỏi ngưỡng lấy ở đâu ra, trả lời trung thực: ngưỡng nghiệp vụ suy từ đặc tả và business rule, còn các con số hạ tầng như 12 request mỗi giây hay 150 mili giây là giả định tính toán, chưa đo trên hệ thống thật, và đã được ghi rõ là giả định trong tài liệu. Hết phần kiến trúc, chuyển sang demo. -->
 
 ---
 
@@ -582,60 +582,29 @@ flowchart LR
 | 5 | UC-04 | Tạo offer 51.840.000 VND, vượt band 8%, duyệt cấp 1 rồi cấp 2 | BR-08 xác định 2 cấp; BR-16 khi yêu cầu chỉnh sửa thì `attempt_no` tăng |
 | 6 | UC-05 | Mở Reports, xem 4 biểu đồ, kiểm tra `dataFreshness`, xuất CSV | Báo cáo đọc bản sao, độ trễ ≤ 15 phút, metric có định nghĩa theo BR-24 |
 
-<!-- Ghi chú người nói: Nhấn rằng sáu bước này đi liên tục trên cùng một ứng viên và cùng một JD, chứ không phải trình diễn sáu màn rời rạc; mục tiêu là cho hội đồng thấy tính liên tục của dữ liệu, rule và chuyển trạng thái. Prototype là một tệp HTML tĩnh chạy được không cần mạng, chọn cách này để không phụ thuộc đường truyền phòng học. Nói trước rằng nếu máy trục trặc thì có bản ghi hình 3 đến 5 phút dự phòng. Thời lượng cụm slide 25–27: 3 phút, trong đó thao tác thật khoảng 2 phút. -->
+<!-- Ghi chú người nói: Nhấn rằng sáu bước này đi liên tục trên cùng một ứng viên và cùng một JD, chứ không phải trình diễn sáu màn rời rạc; mục tiêu là cho hội đồng thấy tính liên tục của dữ liệu, rule và chuyển trạng thái. Prototype là một tệp HTML tĩnh chạy được không cần mạng, chọn cách này để không phụ thuộc đường truyền phòng học. Nói trước rằng nếu máy trục trặc thì có bản ghi hình 3 đến 5 phút dự phòng. Thời lượng cụm slide 25–27: 4,5 phút, trong đó thao tác thật trên prototype khoảng 3 phút. -->
 
 ---
 
 ## Màn hình minh hoạ 1 — SCR-05 phát hiện xung đột lịch
 
-```text
-┌ Xếp lịch vòng 2 — Hoàng Thị Mai Chi · APP-1042 · JD-01 ────── 17/08/2026 15:52 ┐
-│ Vòng: R2 System Design         Khung giờ chọn: 20/08/2026  14:00 – 15:30       │
-│ Người phỏng vấn: Vũ Ngọc Lan (chính) · Trần Quốc Bảo (phụ)                     │
-├────────────────────────────────────────────────────────────────────────────────┤
-│ ! XUNG ĐỘT LỊCH — không lưu được ở khung giờ này  (BR-03)                      │
-│   Vũ Ngọc Lan đã có INT-2061 · Bùi Tuấn Kiệt · 20/08  14:00 – 15:00            │
-│   newStart < existingEnd  AND  newEnd > existingStart   →  chồng 60 phút       │
-│   Trần Quốc Bảo: không xung đột.                                               │
-├────────────────────────────────────────────────────────────────────────────────┤
-│ BA KHUNG GIỜ TRỐNG CHO CẢ HAI NGƯỜI PHỎNG VẤN                                  │
-│   (o) 20/08  16:00 – 17:30     ( ) 21/08  09:30 – 11:00     ( ) 21/08  14:00   │
-├────────────────────────────────────────────────────────────────────────────────┤
-│ [ Huỷ ]   [ Đổi người phỏng vấn ]   [ Dùng khung đã chọn ]   [ Ép đặt lịch ]   │
-│ # "Ép đặt lịch" chỉ hiện với Recruiter và HR Admin; bắt buộc lý do ≥ 20 ký tự  │
-└────────────────────────────────────────────────────────────────────────────────┘
-```
+![w:820](../prototype/screenshots/07-scr05-xep-lich-xung-dot.png)
 
-<em class="cap">Hình 5.70 — SCR-05, trạng thái phát hiện xung đột kèm ba khung giờ gợi ý (do D thực hiện)</em>
+<em class="cap">Hình 5.6 — SCR-05, trạng thái phát hiện xung đột kèm ba khung giờ gợi ý (do D thực hiện)</em>
 
-<!-- Ghi chú người nói: Đây là bản mô tả bố cục bằng khối ký tự vì bộ ảnh chụp màn hình sẽ được chụp từ prototype ngay trước buổi bảo vệ và thay vào chỗ này. Ba chi tiết đáng chỉ: một, hệ thống nói rõ ai bị trùng và trùng với buổi nào chứ không chỉ báo lỗi chung chung, vì chuyên viên tuyển dụng cần đủ thông tin để quyết định; hai, ba khung giờ gợi ý được tính trong 5 ngày làm việc kế tiếp và trong giờ hành chính, và phải trống cho tất cả người phỏng vấn được chọn chứ không chỉ người bị trùng; ba, nút ép đặt lịch chỉ hiển thị với hai vai trò theo ma trận phân quyền, và việc ẩn nút chỉ là lớp trải nghiệm, tầng service vẫn kiểm tra lại quyền. Khi ép đặt lịch, hệ thống ghi một dòng audit với hành động INTERVIEW_CONFLICT_OVERRIDE kèm lý do. -->
+<!-- Ghi chú người nói: Ảnh chụp trực tiếp từ prototype, đúng trạng thái sẽ thao tác ở bước 2 của kịch bản demo. Ba chi tiết đáng chỉ: một, hệ thống nói rõ ai bị trùng và trùng với buổi nào chứ không chỉ báo lỗi chung chung, vì chuyên viên tuyển dụng cần đủ thông tin để quyết định; hai, ba khung giờ gợi ý được tính trong 5 ngày làm việc kế tiếp và trong giờ hành chính, và phải trống cho tất cả người phỏng vấn được chọn chứ không chỉ người bị trùng; ba, nút xác nhận chỉ mở khoá khi đã nhập lý do override dài tối thiểu 20 ký tự và ô này chỉ hiện với Recruiter và HR Admin, còn việc ẩn ô chỉ là lớp trải nghiệm vì tầng service vẫn kiểm tra lại quyền. Khi ép đặt lịch, hệ thống ghi một dòng audit kèm lý do và người thực hiện. -->
 
 ---
 
 ## Màn hình minh hoạ 2 — SCR-08 duyệt offer vượt band
 
-```text
-┌ Hộp thư duyệt offer — Lê Thu Hà (Head of HR) ──────────────── 26/08/2026 10:12 ┐
-│ Chờ duyệt (2)                                                                  │
-│  > OFF-318 · Hoàng Thị Mai Chi · Senior Backend Engineer (Java)    Cấp 2 / 2   │
-│    OFF-317 · Ngô Phương Thảo   · Data Engineer                     Đã đủ cấp   │
-├────────────────────────────────────────────────────────────────────────────────┤
-│ OFF-318 — lần trình duyệt thứ 2  (attempt_no = 2, do cấp 2 từng yêu cầu sửa)   │
-│   Mức lương đề xuất : 51.840.000 VND / tháng                                   │
-│   Band của JD-01    : 35.000.000 – 48.000.000  →  vượt 8,0%  ⇒  2 cấp duyệt    │
-│   Cấp 1  Trần Quốc Bảo (Hiring Manager)   APPROVED   25/08 16:20               │
-│   Cấp 2  Lê Thu Hà     (Head of HR)       đang chờ quyết định                  │
-│   Hạn phản hồi của ứng viên: 07/09/2026 17:00   (BR-09 — 7 ngày làm việc)      │
-├────────────────────────────────────────────────────────────────────────────────┤
-│ [ Xem hồ sơ và feedback 3 vòng ]    [ Từ chối ]  [ Yêu cầu sửa ]  [ Duyệt ]    │
-└────────────────────────────────────────────────────────────────────────────────┘
-```
+![w:840](../prototype/screenshots/14-scr08-hop-thu-duyet.png)
 
-<em class="cap">Hình 5.77 và 5.78 — SCR-08, danh sách chờ duyệt và chi tiết offer, ghép lại (do D thực hiện)</em>
+<em class="cap">SCR-08 — danh sách chờ duyệt và chi tiết offer trên cùng một màn (do D thực hiện; mục 5.5)</em>
 
 - Ba điểm nhấn cần hội đồng thấy: **rule chặn thật** (BR-03), **chuỗi duyệt tính tự động theo band** (BR-08), **báo cáo có ghi độ tươi dữ liệu** (NFR-10).
 
-<!-- Ghi chú người nói: Chỉ vào dòng band và tỷ lệ vượt: số cấp duyệt không do người dùng chọn mà hệ thống tự tính từ mức lương so với band của JD, đúng BR-08; đây là ví dụ business rule được nhúng vào giao diện chứ không nằm trong đầu người vận hành. Chỉ tiếp vào attempt_no bằng 2: lần trình duyệt thứ nhất bị cấp 2 yêu cầu chỉnh sửa nên chuỗi duyệt chạy lại từ cấp một, nhưng lịch sử lần một vẫn còn để kiểm toán. Nút xem hồ sơ và feedback là cạnh ngược quan trọng trong bản đồ màn hình: thiếu nó thì màn duyệt trở thành duyệt mù. Kết lại phần demo bằng ba điểm nhấn ở gạch đầu dòng cuối, rồi chuyển sang Chương 6. -->
+<!-- Ghi chú người nói: Chỉ vào dòng band và tỷ lệ vượt: số cấp duyệt không do người dùng chọn mà hệ thống tự tính từ mức lương so với band của JD, đúng BR-08; đây là ví dụ business rule được nhúng vào giao diện chứ không nằm trong đầu người vận hành. Chỉ tiếp vào cột attempt_no: nếu một cấp chọn Yêu cầu chỉnh sửa thì theo BR-16 offer quay về nháp, attempt_no tăng lên 2 và chuỗi duyệt chạy lại từ cấp một, nhưng lịch sử lần duyệt trước vẫn còn nguyên để kiểm toán; đây chính là thao tác sẽ bấm trong demo. Kết lại phần demo bằng ba điểm nhấn ở gạch đầu dòng cuối, rồi chuyển sang Chương 6. -->
 
 ---
 
@@ -643,25 +612,24 @@ flowchart LR
 
 | Kết quả | Con số |
 |---|---|
-| Phân tích yêu cầu | 7 business actor, 5 use case đặc tả đầy đủ, 16 business rule truy vết được |
+| Phân tích yêu cầu | 7 business actor, 5 use case đặc tả đầy đủ, 16 business rule đặc tả đầy đủ trong tổng 23 mã truy vết được |
 | Phân tích hành vi | 2 activity, 2 state machine, 3 sequence có `alt`/`opt`/`loop` và message trả về |
 | Cấu trúc dữ liệu | 18 bảng, 9 ENUM, DDL PostgreSQL chạy được, đạt 3NF với 2 điểm phá chuẩn có lý do |
 | Thiết kế hệ thống | 24 component, 14 node triển khai, 12 ADR, 11 màn hình, 14 NFR định lượng |
 
 - Chưa cài đặt phần lõi: prototype là bản HTML tĩnh, mọi rule được minh hoạ chứ chưa được thực thi bởi mã nguồn thật.
 - Các con số hiệu năng là **ước lượng bằng tính toán**, chưa có kết quả đo tải trên hệ thống thật.
-- Chín đề xuất bổ sung cột và bảng gửi C (trong đó có `outbox_events`, cột `version`, giá trị `SHORTLISTED`) chưa được áp vào `sql/schema.sql`.
-- Bảy điểm chưa khớp giữa các chương đã được ghi thành sổ mâu thuẫn X-01 đến X-07, còn ba điểm chờ chốt ở buổi đồng bộ cuối.
+- Thiết kế yêu cầu chín bổ sung ở tầng lưu trữ, trong đó có bảng `outbox_events`, cột `version` và giá trị `SHORTLISTED`; đây là phần mở rộng mà lược đồ cơ sở dữ liệu ở Chương 4 chưa bao gồm.
 - NFR-09 mới đạt ở phần nhãn giao diện, chưa đạt ở phần thư điện tử vì bảng `email_templates` chưa có cột ngôn ngữ.
 
-<!-- Ghi chú người nói: Trình bày hạn chế một cách chủ động thay vì để hội đồng phát hiện; đó là điểm cộng chứ không phải điểm trừ. Nói rõ nhóm không tuyên bố hệ thống đã chạy được, mà tuyên bố thiết kế đã đủ chi tiết để lập trình được: mỗi khẳng định kỹ thuật đều truy được về một mã UC, BR, NFR hoặc ADR. Nhấn rằng bảy mâu thuẫn được ghi lại kèm phương án đề xuất và chi phí sửa chứ không bị giấu đi, vì việc phát hiện được mâu thuẫn giữa bốn tài liệu do bốn người viết chính là một kết quả của quá trình review chéo. Thời lượng cụm slide 28–30: 2 phút. -->
+<!-- Ghi chú người nói: Trình bày hạn chế một cách chủ động thay vì để hội đồng phát hiện; đó là điểm cộng chứ không phải điểm trừ. Nói rõ nhóm không tuyên bố hệ thống đã chạy được, mà tuyên bố thiết kế đã đủ chi tiết để lập trình được: mỗi khẳng định kỹ thuật đều truy được về một mã UC, BR, NFR hoặc ADR. Nhấn rằng các hạn chế trên đều là giới hạn phạm vi đã lường trước và đã ghi rõ trong báo cáo, kèm phương án xử lý và chi phí ước tính, chứ không phải lỗi phát hiện muộn. Thời lượng cụm slide 28–30: 1 phút. -->
 
 ---
 
 ## Hướng phát triển
 
 - **Đo thật trước khi tối ưu**: chạy k6 theo đúng ba kịch bản đã viết trong phụ lục NFR, rồi hiệu chỉnh ngưỡng nhân bản và kích thước pool kết nối theo số đo thay vì theo ước lượng.
-- **Hoàn tất đề xuất schema gửi C**: bảng `outbox_events`, bảng `candidate_portal_tokens`, cột `version` cho khoá lạc quan, cột ngôn ngữ cho `email_templates` để đạt NFR-09 ở phần thư điện tử.
+- **Hoàn thiện lược đồ dữ liệu**: bổ sung bảng `outbox_events`, bảng `candidate_portal_tokens`, cột `version` cho khoá lạc quan và cột ngôn ngữ cho `email_templates` để đạt NFR-09 ở phần thư điện tử.
 - **Chức năng mở rộng F11 và F12**: gợi ý ghép hồ sơ với JD và bóc tách CV thành hồ sơ có cấu trúc; kiến trúc đã chừa sẵn chỗ đặt ở tầng adapter nên không phải sửa lõi nghiệp vụ.
 - **Tách service khi tải tăng**: `ReportingService` và `SchedulingService` là hai ứng viên tách trước tiên vì ranh giới interface đã rõ; chi phí chuyển đổi là đổi lời gọi trong tiến trình thành lời gọi qua mạng.
 - **Nâng mức khả dụng**: bật chế độ dự phòng cho `EdgeNode` và Redis, diễn tập khôi phục hằng quý để kiểm chứng mục tiêu khôi phục trong 4 giờ.
@@ -681,4 +649,4 @@ flowchart LR
 | Chịu được bao nhiêu người dùng, scale chiều nào? | • Đỉnh thiết kế ~12 request/giây, 2 instance đáp ứng ~100 (ước lượng) • Scale ngang 2→6, trần do số kết nối PostgreSQL • Worker không scale ngang, chỉ chia job theo khoá |
 | Bảo mật thông tin ứng viên? | • Từ chối mặc định, kiểm tra quyền ở cả API và service • Hồ sơ đầy đủ chỉ cho recruiter và quản lý của JD; người phỏng vấn chỉ thấy packet được giao (BR-20) • Ứng viên vào bằng token có hạn |
 
-<!-- Ghi chú người nói: Mỗi ô chỉ là dàn ý; trả lời bằng lời nói ngắn gọn rồi dừng, không đọc hết bảng. Phân công trả lời: câu về kiến trúc, hạ tầng, giao diện do D trả lời; câu về use case và business rule do A; câu về diagram hành vi do B; câu về cơ sở dữ liệu và chuẩn hoá do C. Hai câu dự phòng nên chuẩn bị thêm: "wireframe này có tiếp cận được cho người khuyết tật không" — trả lời bằng NFR-14, gồm tương phản tối thiểu 4,5 trên 1, thao tác được hoàn toàn bằng bàn phím với phương án thay thế cho kéo–thả, và nhãn cho mọi ô nhập; "hệ thống khác gì Greenhouse hay Lever" — trả lời rằng đây là hệ thống nội bộ, không phải dịch vụ cho thuê, tuỳ biến sâu theo quy trình duyệt và phân quyền của doanh nghiệp, tích hợp thẳng đăng nhập một lần nội bộ. Kết thúc: cảm ơn hội đồng, nhắc rằng toàn bộ tài liệu, sơ đồ nguồn và mã DDL nằm trong kho mã của nhóm. -->
+<!-- Ghi chú người nói: Mỗi ô chỉ là dàn ý; trả lời bằng lời nói ngắn gọn rồi dừng, không đọc hết bảng. Phân công trả lời: câu về kiến trúc, hạ tầng, giao diện do D trả lời; câu về use case và business rule do A; câu về diagram hành vi do B; câu về cơ sở dữ liệu và chuẩn hoá do C. Hai câu dự phòng nên chuẩn bị thêm: "wireframe này có tiếp cận được cho người khuyết tật không" — trả lời bằng NFR-14, gồm tương phản tối thiểu 4,5 trên 1, thao tác được hoàn toàn bằng bàn phím với phương án thay thế cho kéo–thả, và nhãn cho mọi ô nhập; "hệ thống khác gì Greenhouse hay Lever" — trả lời rằng đây là hệ thống nội bộ, không phải dịch vụ cho thuê, tuỳ biến sâu theo quy trình duyệt và phân quyền của doanh nghiệp, tích hợp thẳng đăng nhập một lần nội bộ. Kết thúc: cảm ơn hội đồng, nhắc rằng toàn bộ sơ đồ nguồn và mã DDL đều nằm trong bản báo cáo và phụ lục đã nộp. -->

@@ -28,6 +28,13 @@ Phạm vi hỗ trợ Markdown:
       scripts/render_mermaid_D.py: <slug-tên-file-nguồn>-NN.png). Nếu chưa render thì
       giữ hành vi cũ: một khung có chú thích kèm mã nguồn sơ đồ để chèn ảnh thủ công.
       Dùng --no-images để luôn chèn khung thay vì ảnh.
+    - Ảnh Markdown ![chú thích](đường/dẫn.png) đứng riêng trên một dòng: ảnh được
+      nhúng thẳng vào file Word, căn giữa. Đường dẫn được tra lần lượt theo thư mục
+      chứa file .md đang chuyển rồi tới thư mục gốc kho mã. Ảnh được thu theo tỷ lệ
+      để không vượt quá MAX_IMG_WIDTH về chiều rộng và MAX_IMG_HEIGHT về chiều cao,
+      nhờ vậy ảnh chụp màn hình dạng cao vẫn nằm gọn trong một trang. Nếu không tìm
+      thấy file ảnh thì chèn một dòng chữ nghiêng ghi rõ ảnh nào thiếu và tiếp tục
+      chuyển đổi. Dùng --no-images để bỏ qua toàn bộ việc nhúng ảnh.
     - Đường kẻ ngang ---
     - Trích dẫn > ...
 """
@@ -36,8 +43,10 @@ from __future__ import annotations
 
 import argparse
 import re
+import struct
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 try:
     from docx import Document
@@ -45,7 +54,7 @@ try:
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.oxml import OxmlElement
     from docx.oxml.ns import qn
-    from docx.shared import Inches, Pt, RGBColor
+    from docx.shared import Emu, Inches, Pt, RGBColor
 except ImportError:  # pragma: no cover
     sys.exit("Thiếu thư viện python-docx. Cài bằng: pip install python-docx")
 
@@ -54,6 +63,9 @@ RENDERED_DIR = ROOT / "diagrams" / "rendered"
 # Khổ giấy mặc định của python-docx là Letter với lề 1 inch -> vùng chữ rộng 6,5 inch.
 # Để 6,2 inch cho sơ đồ để còn khoảng thở hai bên khi in.
 MAX_IMG_WIDTH = Inches(6.2)
+# Ảnh chụp màn hình cao hơn sơ đồ rất nhiều; nếu để nguyên chiều rộng tối đa thì một
+# ảnh có thể tràn sang trang sau. Giới hạn thêm chiều cao để ảnh luôn gọn trong trang.
+MAX_IMG_HEIGHT = Inches(7.5)
 
 
 # --------------------------------------------------------------------------
@@ -155,23 +167,67 @@ def slugify(text: str) -> str:
     return re.sub(r"-{2,}", "-", text).strip("-")[:60] or "diagram"
 
 
+# Dòng chỉ chứa một ảnh Markdown: ![chú thích](đường/dẫn.png "tiêu đề tuỳ chọn")
+MD_IMAGE_RE = re.compile(
+    r'^!\[([^\]]*)\]\(\s*<?([^)>\s]+)>?(?:\s+"[^"]*"|\s+\'[^\']*\')?\s*\)$'
+)
+
+
+def png_pixel_size(path: Path) -> tuple[int, int] | None:
+    """Đọc chiều rộng/chiều cao (pixel) từ header PNG, không cần thư viện ngoài."""
+    try:
+        with open(path, "rb") as fh:
+            head = fh.read(24)
+    except OSError:
+        return None
+    if len(head) < 24 or head[:8] != b"\x89PNG\r\n\x1a\n" or head[12:16] != b"IHDR":
+        return None
+    width, height = struct.unpack(">II", head[16:24])
+    return (width, height) if width and height else None
+
+
+def fit_size(path: Path) -> tuple[int, int | None]:
+    """Kích thước chèn vào Word: vừa MAX_IMG_WIDTH và MAX_IMG_HEIGHT, giữ tỷ lệ.
+
+    Trả về (width, height). Nếu không đọc được kích thước thật (ảnh không phải PNG)
+    thì trả về (MAX_IMG_WIDTH, None) để python-docx tự suy ra chiều cao như trước.
+    """
+    size = png_pixel_size(path)
+    if size is None:
+        return MAX_IMG_WIDTH, None
+    px_w, px_h = size
+    width = int(MAX_IMG_WIDTH)
+    height = int(round(width * px_h / px_w))
+    if height > int(MAX_IMG_HEIGHT):
+        height = int(MAX_IMG_HEIGHT)
+        width = int(round(height * px_w / px_h))
+    return Emu(width), Emu(height)
+
+
 # --------------------------------------------------------------------------
 # Bộ chuyển đổi
 # --------------------------------------------------------------------------
 
 class Converter:
-    def __init__(self, doc: Document, images_dir: Path | None = RENDERED_DIR) -> None:
+    def __init__(self, doc: Document, images_dir: Path | None = RENDERED_DIR,
+                 embed_images: bool | None = None) -> None:
         self.doc = doc
         self.images_dir = images_dir
+        # embed_images điều khiển riêng việc nhúng ảnh Markdown. Mặc định bám theo
+        # images_dir để --no-images (truyền images_dir=None) tắt luôn cả hai loại ảnh.
+        self.embed_images = (images_dir is not None) if embed_images is None else embed_images
         self.slug = ""        # slug của file .md đang chuyển, để tra tên ảnh
         self.mermaid_n = 0    # thứ tự sơ đồ trong file đó, đếm lại từ 1 mỗi file
+        self.src_dir = ROOT   # thư mục chứa file .md đang chuyển, để giải đường dẫn ảnh
         self.stats = {"heading": 0, "table": 0, "code": 0, "mermaid": 0,
-                      "image": 0, "para": 0, "list": 0}
+                      "image": 0, "md_image": 0, "missing_image": 0,
+                      "para": 0, "list": 0}
 
     def begin_source(self, src: Path) -> None:
         """Bắt đầu một file nguồn mới: đặt lại bộ đếm sơ đồ và slug tra ảnh."""
         self.slug = slugify(src.stem)
         self.mermaid_n = 0
+        self.src_dir = src.resolve().parent
 
     # -- ảnh render ------------------------------------------------------
     def find_rendered(self) -> Path | None:
@@ -181,11 +237,52 @@ class Converter:
         png = self.images_dir / f"{self.slug}-{self.mermaid_n:02d}.png"
         return png if png.is_file() else None
 
-    def add_image(self, png: Path) -> None:
-        self.stats["image"] += 1
+    def add_image(self, png: Path, stat_key: str = "image") -> None:
+        self.stats[stat_key] += 1
+        width, height = fit_size(png)
         para = self.doc.add_paragraph()
         para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        para.add_run().add_picture(str(png), width=MAX_IMG_WIDTH)
+        run = para.add_run()
+        if height is None:
+            run.add_picture(str(png), width=width)
+        else:
+            run.add_picture(str(png), width=width, height=height)
+
+    # -- ảnh viết bằng cú pháp Markdown ----------------------------------
+    def resolve_md_image(self, target: str) -> Path | None:
+        """Giải đường dẫn ảnh: ưu tiên thư mục chứa file .md, sau đó tới gốc kho mã."""
+        target = unquote(target.strip())
+        if not target or "://" in target:
+            return None
+        path = Path(target)
+        candidates = [path] if path.is_absolute() else [self.src_dir / path, ROOT / path]
+        for cand in candidates:
+            if cand.is_file():
+                return cand
+        return None
+
+    def add_md_image(self, alt: str, target: str) -> None:
+        """Chèn ảnh của một dòng ![chú thích](đường/dẫn.png) đứng riêng."""
+        if not self.embed_images:
+            self.note(f"[Ảnh: {target}" + (f" — {alt}]" if alt else "]"))
+            return
+        png = self.resolve_md_image(target)
+        if png is None:
+            self.stats["missing_image"] += 1
+            self.note(f"[Thiếu ảnh: không tìm thấy file {target}"
+                      + (f" — {alt}]" if alt else "]"))
+            return
+        self.add_image(png, stat_key="md_image")
+
+    def note(self, text: str) -> None:
+        """Một dòng chữ nghiêng cỡ nhỏ báo tình trạng ảnh, căn giữa."""
+        para = self.doc.add_paragraph()
+        para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        para.paragraph_format.space_before = Pt(4)
+        run = para.add_run(text)
+        run.italic = True
+        run.font.size = Pt(9)
+        run.font.color.rgb = RGBColor(0x88, 0x44, 0x00)
 
     # -- khối mã ---------------------------------------------------------
     def add_code_block(self, lines: list[str], lang: str) -> None:
@@ -295,6 +392,13 @@ class Converter:
                 i += 1
                 continue
 
+            # ảnh Markdown đứng riêng một dòng
+            img = MD_IMAGE_RE.match(stripped)
+            if img:
+                self.add_md_image(img.group(1).strip(), img.group(2))
+                i += 1
+                continue
+
             # tiêu đề
             m = re.match(r"^(#{1,6})\s+(.*)$", stripped)
             if m:
@@ -337,6 +441,7 @@ class Converter:
             while i < len(lines):
                 nxt = lines[i].strip()
                 if (not nxt or nxt.startswith(("#", "|", ">", "```"))
+                        or MD_IMAGE_RE.match(nxt)
                         or re.match(r"^[-*+]\s+", nxt) or re.match(r"^\d+[.)]\s+", nxt)
                         or re.fullmatch(r"[-*_]{3,}", nxt)):
                     break
@@ -349,7 +454,8 @@ class Converter:
             self.stats["para"] += 1
 
 
-def build(sources: list[Path], out: Path, images_dir: Path | None = RENDERED_DIR) -> dict:
+def build(sources: list[Path], out: Path, images_dir: Path | None = RENDERED_DIR,
+          embed_images: bool | None = None) -> dict:
     doc = Document()
 
     style = doc.styles["Normal"]
@@ -357,7 +463,7 @@ def build(sources: list[Path], out: Path, images_dir: Path | None = RENDERED_DIR
     style.font.size = Pt(12)
     style.element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
 
-    conv = Converter(doc, images_dir)
+    conv = Converter(doc, images_dir, embed_images)
     for idx, src in enumerate(sources):
         if idx > 0:
             doc.add_page_break()
@@ -374,7 +480,8 @@ def main() -> int:
     ap.add_argument("inputs", nargs="+", help="Các file .md theo đúng thứ tự ghép")
     ap.add_argument("-o", "--output", required=True, help="Đường dẫn file .docx đầu ra")
     ap.add_argument("--no-images", action="store_true",
-                    help="Không nhúng ảnh render; luôn chèn khung placeholder kèm mã sơ đồ")
+                    help="Không nhúng ảnh: sơ đồ Mermaid chèn khung placeholder kèm mã "
+                         "nguồn, ảnh Markdown chèn một dòng ghi chú thay cho ảnh")
     args = ap.parse_args()
 
     sources = [Path(p) for p in args.inputs]
@@ -383,11 +490,14 @@ def main() -> int:
         sys.exit("Không tìm thấy file: " + ", ".join(missing))
 
     out = Path(args.output)
-    stats = build(sources, out, None if args.no_images else RENDERED_DIR)
+    stats = build(sources, out,
+                  None if args.no_images else RENDERED_DIR,
+                  embed_images=not args.no_images)
     size_kb = out.stat().st_size / 1024
     print(f"Đã tạo {out} ({size_kb:.0f} KB)")
     print("  tiêu đề: {heading} | bảng: {table} | sơ đồ Mermaid: {mermaid} "
-          "(nhúng ảnh: {image}) | khối mã khác: {code} | đoạn văn: {para} | "
+          "(nhúng ảnh: {image}) | ảnh Markdown nhúng: {md_image} "
+          "(thiếu: {missing_image}) | khối mã khác: {code} | đoạn văn: {para} | "
           "mục danh sách: {list}".format(**stats))
     return 0
 

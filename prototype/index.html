@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ATS mini — Prototype</title>
-<meta name="description" content="Prototype click-through 11 màn hình của hệ thống ATS mini (VXTech) — deliverable D8, Person D.">
+<meta name="description" content="Prototype click-through 11 màn hình của hệ thống ATS mini (VXTech).">
 <style>
 /* ============================================================
-   ATS mini — Prototype (D8)
+   ATS mini — Prototype click-through 11 màn hình
    Một file duy nhất, không tải tài nguyên ngoài, chạy được offline.
    ============================================================ */
 
@@ -479,7 +479,7 @@ textarea{min-height:64px;resize:vertical;font-family:inherit}
     <div class="nav-label">Điều hướng</div>
     <nav id="nav" aria-label="Điều hướng chính"></nav>
     <div class="sidebar-foot">
-      Prototype D8 — dữ liệu giả<br>Phiên bản v1.0 · 16/08/2026
+      Prototype minh hoạ — dữ liệu giả<br>Phiên bản v1.0 · 16/08/2026
     </div>
   </aside>
 
@@ -516,7 +516,7 @@ textarea{min-height:64px;resize:vertical;font-family:inherit}
             <p>Tổng hợp JD đang phụ trách, việc cần xử lý và cảnh báo SLA của <span id="dash-owner">Nguyễn Minh Anh</span>.</p>
           </div>
           <div class="row-tight">
-            <button class="btn btn-sm" type="button" id="btn-dash-empty">Xem trạng thái trống</button>
+            <button class="btn btn-sm" type="button" id="btn-dash-empty">Xem trạng thái rỗng</button>
             <button class="btn btn-sm btn-primary" type="button" data-roles="RECRUITER" onclick="showScreen('scr-07')">+ Tạo offer</button>
           </div>
         </div>
@@ -603,7 +603,7 @@ textarea{min-height:64px;resize:vertical;font-family:inherit}
           <div class="grow">
             <span class="scr-tag">SCR-04 · UC-02, UC-03 (xem), UC-04</span>
             <h1 id="h-scr04">Hoàng Thị Mai Chi</h1>
-            <p>Ứng tuyển JD-01 Senior Backend Engineer (Java) · Nguồn <span class="mono">LINKEDIN</span> · 6 năm kinh nghiệm · mai.chi.hoang@gmail.com</p>
+            <p>Ứng tuyển JD-01 Senior Backend Engineer (Java) · Nguồn <span class="mono">REFERRAL</span> · 6 năm kinh nghiệm · mai.chi.hoang@gmail.com</p>
           </div>
           <div class="row-tight">
             <span class="chip chip-info" id="cand-status">SCREENING</span>
@@ -784,7 +784,7 @@ textarea{min-height:64px;resize:vertical;font-family:inherit}
                 <div class="field">
                   <label for="ow-salary">Lương gross tháng (VND)</label>
                   <input id="ow-salary" type="number" min="0" step="100000" value="51840000">
-                  <span class="hint">Band của JD-01: <b>35.000.000 – 48.000.000 VND</b> — giá trị band được chụp lại vào offer tại thời điểm tạo (<span class="mono">offers.band_snapshot_min/max</span> — đề xuất P1 gửi C, chưa có trong schema v1.2).</span>
+                  <span class="hint">Band của JD-01: <b>35.000.000 – 48.000.000 VND</b> — giá trị band được chụp lại vào offer tại thời điểm tạo, nên việc điều chỉnh band của JD về sau không làm sai lệch tỷ lệ vượt band đã được duyệt.</span>
                 </div>
                 <div class="alert" id="ow-band" style="margin-bottom:14px"><span class="a-ic">≡</span><div><b id="ow-band-title">—</b><span id="ow-band-text">—</span></div></div>
                 <div class="field"><label for="ow-bonus">Phúc lợi kèm theo</label><textarea id="ow-bonus">Thưởng hiệu suất tối đa 2 tháng lương; bảo hiểm sức khoẻ mở rộng cho người thân; 15 ngày phép năm; ngân sách đào tạo 20.000.000 VND/năm.</textarea></div>
@@ -1041,7 +1041,7 @@ textarea{min-height:64px;resize:vertical;font-family:inherit}
             <div class="tl-item"><div class="t-time">15/08/2026</div><div class="t-title">Bạn nhận được thư mời làm việc</div><div class="t-desc">Vui lòng phản hồi trước 25/08/2026.</div></div>
             <div class="tl-item is-past"><div class="t-time">14/08/2026</div><div class="t-title">Hoàn thành vòng phỏng vấn kỹ thuật 1</div><div class="t-desc">Cảm ơn bạn đã dành thời gian trao đổi.</div></div>
             <div class="tl-item is-past"><div class="t-time">12/08/2026</div><div class="t-title">Bạn đã xác nhận lịch phỏng vấn</div><div class="t-desc">Xác nhận trong thời hạn 24 giờ.</div></div>
-            <div class="tl-item is-past"><div class="t-time">10/08/2026</div><div class="t-title">Hồ sơ được tiếp nhận</div><div class="t-desc">Nguồn ứng tuyển: LinkedIn.</div></div>
+            <div class="tl-item is-past"><div class="t-time">10/08/2026</div><div class="t-title">Hồ sơ được tiếp nhận</div><div class="t-desc">Nguồn ứng tuyển: giới thiệu nội bộ.</div></div>
           </div>
         </div>
       </div>
@@ -1218,7 +1218,7 @@ var DB = {
     { t:'Hoàn thiện offer cho Bùi Tuấn Kiệt',      s:'UC-04 · draft chưa gửi duyệt',      k:'neutral' }
   ],
 
-  /* Transition hợp lệ giữa các cột kanban, rút từ STATE-01 của B (mục 3.4 Chương 3).
+  /* Transition hợp lệ giữa các cột kanban, rút từ STATE-01 ở mục 3.4 Chương 3.
      Cột "Kết thúc" gom REJECTED, TALENT_POOL, DECLINED, EXPIRED, HIRED, GHOSTED, ON_HOLD,
      OFFER_REJECTED_INTERNALLY nên mọi cột đều có đường đi tới nó. */
   allowed: {
@@ -1231,7 +1231,7 @@ var DB = {
     REJECTED:      []
   },
 
-  /* Kanban của JD-01 — cột khớp application_status (kèm SHORTLISTED đề xuất X-02) */
+  /* Kanban của JD-01 — cột khớp giá trị của application_status */
   columns: [
     { id:'NEW',           label:'Mới nộp' },
     { id:'SCREENING',     label:'Đang sàng lọc' },
@@ -2190,7 +2190,7 @@ function renderReports(){
 }
 
 /* ============================================================
-   12. Kịch bản demo 6 bước — khớp Bảng 6.20 của docs/demo_runbook_D.md
+   12. Kịch bản demo 6 bước — đi qua 5 use case trọng tâm
    ============================================================ */
 var DEMO = [
   { name:'Đăng nhập SSO', tag:'NFR-04 · ADR-05 · ADR-10', role:'RECRUITER', screen:'scr-01',
@@ -2209,7 +2209,7 @@ var DEMO = [
     note:'Trên SCR-07, chuỗi duyệt được tính lại mỗi khi mức lương đổi. Offer OFF-318 có mức 51.840.000 VND, vượt trần band 8% nên cần 2 cấp duyệt. Cấp 1 đã duyệt, Head of HR đang giữ quyền quyết định. Chọn Yêu cầu chỉnh sửa để thấy chuỗi duyệt quay lại cấp 1 và attempt_no tăng.',
     run:function(){ closeModal(); state.selectedOffer = 'OFF-318'; renderInbox(); } },
   { name:'Xem báo cáo tuyển dụng', tag:'UC-05 · NFR-10 · ADR-07', role:'HR_ADMIN', screen:'scr-10',
-    note:'Bốn biểu đồ được dựng từ read model làm mới mỗi 15 phút và đọc trên replica, nên truy vấn báo cáo không chạm cơ sở dữ liệu giao dịch. Dòng dataFreshness cho người dùng biết dữ liệu cũ bao lâu.',
+    note:'Bốn biểu đồ được dựng từ read model làm mới mỗi 15 phút và đọc trên replica, nên truy vấn báo cáo không chạm cơ sở dữ liệu giao dịch. Dòng thông báo thời điểm làm mới cho người dùng biết dữ liệu đang cũ bao lâu.',
     run:function(){ closeModal(); } }
 ];
 
@@ -2330,15 +2330,15 @@ function wire(){
     toast('Cảm ơn bạn đã xác nhận lịch phỏng vấn', 'good');
   });
   $('#pt-reschedule').addEventListener('click', function(){ toast('Đã gửi đề nghị đổi lịch tới nhà tuyển dụng — hồ sơ chuyển sang trạng thái chờ xếp lại lịch'); });
-  $('#pt-accept').addEventListener('click', function(){ portalOffer('good', 'Bạn đã đồng ý nhận việc', 'Hồ sơ chuyển sang ACCEPTED. Các hồ sơ khác của bạn tại VXTech chuyển ON_HOLD trong lúc chờ xác nhận ngày onboard (BR-10). Liên kết mời hiện tại đã hết hiệu lực.'); });
-  $('#pt-decline').addEventListener('click', function(){ portalOffer('danger', 'Bạn đã từ chối thư mời', 'Hồ sơ chuyển sang DECLINED. Cảm ơn bạn đã dành thời gian tham gia quy trình tuyển dụng của VXTech.'); });
+  $('#pt-accept').addEventListener('click', function(){ portalOffer('good', 'Bạn đã đồng ý nhận việc', 'Hồ sơ của bạn chuyển sang trạng thái đã nhận việc. Các hồ sơ khác của bạn tại VXTech được tạm dừng trong lúc chờ xác nhận ngày onboard (BR-10). Liên kết mời hiện tại đã hết hiệu lực.'); });
+  $('#pt-decline').addEventListener('click', function(){ portalOffer('danger', 'Bạn đã từ chối thư mời', 'Hồ sơ của bạn được ghi nhận là đã từ chối thư mời. Cảm ơn bạn đã dành thời gian tham gia quy trình tuyển dụng của VXTech.'); });
   $('#pt-counter').addEventListener('click', function(){ $('#pt-counter-box').hidden = false; });
   $('#pt-counter-cancel').addEventListener('click', function(){ $('#pt-counter-box').hidden = true; });
   $('#pt-counter-send').addEventListener('click', function(){
     var v = Number($('#pt-counter-amount').value || 0);
     $('#pt-counter-box').hidden = true;
     portalOffer('warn', 'Đã gửi đề nghị mức ' + vnd(v),
-      'Hồ sơ chuyển sang NEGOTIATING và nhà tuyển dụng nhận được thông báo (UC-06). Nếu công ty đồng ý, một thư mời mới sẽ được tạo và đi lại toàn bộ chuỗi duyệt từ cấp 1.');
+      'Hồ sơ của bạn chuyển sang trạng thái đang thương lượng và nhà tuyển dụng nhận được thông báo (UC-06). Nếu công ty đồng ý, một thư mời mới sẽ được tạo và đi lại toàn bộ chuỗi duyệt từ cấp 1.');
   });
 
   /* SCR-10 */
