@@ -18,6 +18,9 @@ Cách dùng:
 Yêu cầu: node + npx (tải @mermaid-js/mermaid-cli lần đầu, sau đó dùng cache npx) và
 Google Chrome đã cài sẵn. Không cần cài pandoc hay LibreOffice.
 
+Đường dẫn Chrome được dò tự động theo hệ điều hành (macOS, Windows, Linux); có thể
+ghi đè bằng biến môi trường CHROME_PATH nếu cài ở chỗ khác.
+
 Đầu ra: diagrams/rendered/<slug>-NN.png và diagrams/rendered/README.md
 """
 
@@ -25,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -34,8 +38,37 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "diagrams" / "rendered"
-CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 MMDC_PKG = "@mermaid-js/mermaid-cli@10.9.1"
+
+# Mỗi người trong nhóm dùng một hệ điều hành khác nhau nên đường dẫn Chrome không thể
+# ghi cứng một giá trị. Thứ tự dò: biến môi trường -> vị trí mặc định theo OS -> PATH.
+CHROME_CANDIDATES = [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",   # macOS
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe",          # Windows
+    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+    "/usr/bin/google-chrome",                                          # Linux
+    "/usr/bin/chromium",
+]
+
+
+def find_chrome() -> str:
+    """Trả về đường dẫn Chrome đầu tiên tồn tại, hoặc thoát kèm hướng dẫn."""
+    env = os.environ.get("CHROME_PATH")
+    if env and Path(env).exists():
+        return env
+    for cand in CHROME_CANDIDATES:
+        if cand and Path(cand).exists():
+            return cand
+    found = shutil.which("google-chrome") or shutil.which("chrome") or shutil.which("chromium")
+    if found:
+        return found
+    sys.exit(
+        "Không tìm thấy Google Chrome. Đặt biến môi trường CHROME_PATH trỏ tới file thực thi, "
+        "ví dụ:\n"
+        '  macOS   : export CHROME_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"\n'
+        '  Windows : $env:CHROME_PATH="C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"'
+    )
 
 # Thứ tự này quyết định thứ tự trong trang mục lục — bám thứ tự chương của báo cáo.
 DEFAULT_SOURCES = [
@@ -46,9 +79,11 @@ DEFAULT_SOURCES = [
     "diagrams/B_seq_schedule_interview_v1.md",
     "diagrams/B_seq_offer_approval_v1.md",
     "diagrams/B_seq_sla_feedback_v1.md",
+    "report/chapter_3_behavior.md",
     "diagrams/C_domain_model_v1.md",
     "diagrams/C_class_diagram_v1.md",
     "diagrams/C_erd_v1.md",
+    "report/chapter_4_data.md",
     "diagrams/D_comp_architecture_v1.md",
     "diagrams/D_deploy_topology_v1.md",
     "report/chapter_5_design.md",
@@ -139,11 +174,19 @@ def extract_blocks(md_path: Path) -> list[dict]:
     return blocks
 
 
-def render(code: str, out_png: Path, tmp: Path, puppeteer_cfg: Path) -> tuple[bool, str]:
+def find_npx() -> str:
+    """Trên Windows npx là npx.cmd; subprocess không tự tìm ra nên phải giải đường dẫn."""
+    npx = shutil.which("npx")
+    if not npx:
+        sys.exit("Không tìm thấy npx. Cài Node.js rồi chạy lại.")
+    return npx
+
+
+def render(code: str, out_png: Path, tmp: Path, puppeteer_cfg: Path, npx: str) -> tuple[bool, str]:
     mmd = tmp / "d.mmd"
     mmd.write_text(code + "\n", encoding="utf-8")
     cmd = [
-        "npx", "--yes", MMDC_PKG,
+        npx, "--yes", MMDC_PKG,
         "-i", str(mmd), "-o", str(out_png),
         "-w", "1800", "-s", "2", "-b", "white",
         "-p", str(puppeteer_cfg),
@@ -179,8 +222,9 @@ def main() -> int:
     ap.add_argument("--out", default=str(OUT_DIR), help="Thư mục ảnh đầu ra")
     args = ap.parse_args()
 
-    if not Path(CHROME).exists():
-        sys.exit(f"Không tìm thấy Google Chrome tại {CHROME}")
+    chrome = find_chrome()
+    npx = find_npx()
+    print(f"Chrome: {chrome}\nnpx   : {npx}")
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -195,7 +239,7 @@ def main() -> int:
     tmp = Path(tempfile.mkdtemp(prefix="mmd_"))
     cfg = tmp / "puppeteer.json"
     cfg.write_text(json.dumps({
-        "executablePath": CHROME,
+        "executablePath": chrome,
         "args": ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
     }), encoding="utf-8")
 
@@ -212,7 +256,7 @@ def main() -> int:
             base = slugify(src.stem)
             for n, blk in enumerate(blocks, start=1):
                 png = out_dir / f"{base}-{n:02d}.png"
-                ok, err = render(blk["code"], png, tmp, cfg)
+                ok, err = render(blk["code"], png, tmp, cfg, npx)
                 status = "OK " if ok else "LỖI"
                 size = f"{png.stat().st_size // 1024} KB" if ok else "-"
                 print(f"  [{status}] {png.name:<48} {blk['kind']:<16} {size} {err}")

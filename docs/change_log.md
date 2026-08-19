@@ -38,6 +38,18 @@ diff cụ thể để duyệt nhanh ở Sync S4, nhưng **chưa được A/C ký
 2026-08-06 | C | Thêm bảng application_status_history (append-only) phục vụ time-in-stage + audit chuyển trạng thái Application; cập nhật Domain/Class/ERD/dictionary. Số bảng: 17 → 18. | Ảnh hưởng: schema, B (có thể tham chiếu khi giải thích STATE-01), D (reporting) [hoàn tất kỹ thuật]
 
 2026-08-06 | C | Làm rõ quy ước timestamp: bảng append-only không bắt buộc updated_at; Candidate không có hàng notifications (chỉ email). Bỏ Candidate.linkEmail() khỏi Class vì chưa có bảng đa email. | Ảnh hưởng: ERD ghi chú, Class Diagram [hoàn tất]
+
+2026-08-17 | Nhóm | Chốt bản chính thức của Chương 3-6 là report/chapter_3_behavior.md (B), report/chapter_4_data.md (C), report/chapter_5_design.md và report/chapter_6_conclusion.md (D). docs/chapter-A.docx giữ vai trò Chương 1-2 + phụ lục. | Ảnh hưởng: A, B, C, D [quyết định của nhóm]
+
+2026-08-17 | B (sửa lỗi render) | diagrams/B_seq_offer_approval_v1.md dòng 78: đổi dấu chấm phẩy thành dấu phẩy trong nhãn "25a. Application=ACCEPTED; other apps=ON_HOLD (BR-10)". Dấu ; là ký tự kết thúc câu lệnh của Mermaid nên phần sau nó bị đọc thành một lệnh mới -> parse error. Hệ quả: SEQ-02 chưa từng render được và diagrams/rendered/ vẫn thiếu b-seq-offer-approval-v1-01.png, dù Chương 3 gọi SEQ-02 là "diagram phức tạp nhất, trọng tâm bảo vệ". Nội dung sơ đồ không đổi. | Ảnh hưởng: B (1 ký tự), D (ảnh render) [đã sửa và render lại thành công]
+
+2026-08-17 | Nhóm | scripts/render_mermaid_D.py: dò đường dẫn Chrome theo hệ điều hành thay vì ghi cứng đường dẫn macOS (có thể ghi đè bằng biến CHROME_PATH), và giải đường dẫn npx bằng shutil.which vì trên Windows npx là npx.cmd nên subprocess không gọi trực tiếp được. Bổ sung report/chapter_3_behavior.md và report/chapter_4_data.md vào DEFAULT_SOURCES — 9 sơ đồ trong chính văn Chương 3 và Chương 4 trước đây không được render. Chạy lại toàn bộ: 32/32 sơ đồ thành công. | Ảnh hưởng: D (script), diagrams/rendered/ (24 ảnh render lại + 10 ảnh mới) [hoàn tất]
+
+2026-08-17 | Nhóm | scripts/md_to_docx_D.py: khối ```mermaid nay được nhúng thẳng ảnh render từ diagrams/rendered/ (tra theo đúng quy ước tên <slug>-NN.png) thay vì chỉ chèn khung placeholder để người thật dán ảnh vào. Giữ hành vi cũ khi chưa có ảnh, và có cờ --no-images để quay lại hành vi cũ. | Ảnh hưởng: D (script), bản Word xuất ra [hoàn tất]
+
+2026-08-17 | Nhóm | Thêm scripts/build_full_report.py và bản nộp docs/bao_cao_day_du_v1.docx: ghép docs/chapter-A.docx (bìa, mục lục, tóm tắt, Chương 1-2, phụ lục) với bốn chương Markdown của B, C, D thành một file Word duy nhất — 98 tiêu đề, 57 bảng, 21 ảnh, 15/15 sơ đồ Mermaid đã nhúng ảnh. Script bỏ phần phác Chương 3-6 còn sót trong docx (chỉ còn đoạn con trỏ) và chuẩn hoá 8 dòng mục lục vì số trang cũ không còn đúng. Việc số 4 trong docs/README_part_D.md mục "còn lại" (ghép docx + dán ảnh thủ công) nay đã tự động hoá. | Ảnh hưởng: cả nhóm [hoàn tất; số trang mục lục vẫn phải sinh lại trong Word]
+
+2026-08-17 | Nhóm | Thực hiện việc A-05 của docs/handoff_D_to_ABC_v1.md: gỡ phần TRÙNG trong Chương 3-6 của docs/chapter-A.docx. Gỡ 7 sơ đồ (ACT-01, STATE-01, SEQ-01, SEQ-02, SEQ-03, Domain Model, kiến trúc logic) vì bản mới hơn đã có ở report/ và diagrams/rendered/; gỡ 6 bảng đụng số hiệu với bảng của B/C/D (Bảng 3.1, 4.1, 4.2, 5.1, 6.1, 6.2); gỡ Bảng 5.3 (6 màn) vì Bảng 5.91 của D phủ 11 màn SCR-01…SCR-11; gỡ 3 danh sách đã lỗi thời (ràng buộc & chỉ mục — thiếu attempt_no và UNIQUE(application_id, round_order) của schema v1.2; kiểm soát bảo mật & vận hành; tiêu chí nghiệm thu). Giữ nguyên đoạn dẫn của A ở mỗi chương, Bảng 5.2 (A là chủ sở hữu dải mã NFR-01…NFR-12) và phần Kết luận; mỗi chương được chèn một đoạn con trỏ tới file bản đầy đủ. Sửa 4 dòng mục lục vì số trang không còn đúng. File: 5.554 KB → 471 KB. | Ảnh hưởng: A (chapter-A.docx) [đã thực hiện, cần A rà lại khi mở bằng Word]
 ```
 
 ---
@@ -51,3 +63,4 @@ Các mục trên được phiên audit tự động sửa trực tiếp để c�
 3. **B** xác nhận: STATE-02 giả định "reschedule = update cùng dòng" vẫn đúng với UNIQUE mới.
 4. Cả nhóm xác nhận quyết định Mermaid ở Sync S4.
 5. Sau khi xác nhận, xoá tag "[cần xác nhận]" và tính Done theo `00_README.md` mục 9.
+6. **A** mở lại `docs/chapter-A.docx` bằng Word sau đợt rút gọn ngày 2026-08-17 để: kiểm tra ngắt trang giữa các chương còn hợp lý không, và xử lý các việc A-01, A-02, A-04, A-06, A-07, A-09, A-10, A-11 trong `docs/handoff_D_to_ABC_v1.md` mục 3 — những việc này nằm ở Chương 1, Chương 2 và phụ lục nên **không** được đợt rút gọn đụng tới.

@@ -75,7 +75,7 @@ sequenceDiagram
 
     alt Candidate Accept
         CandidatePortal->>OfferService: 24a. accept(offerId)
-        OfferService->>OfferService: 25a. Application=ACCEPTED; other apps=ON_HOLD (BR-10)
+        OfferService->>OfferService: 25a. Application=ACCEPTED, other apps=ON_HOLD (BR-10)
         OfferService-->>CandidatePortal: 26a. AcceptedAck
     else Candidate Decline
         CandidatePortal->>OfferService: 24b. decline(offerId)

@@ -22,9 +22,12 @@ Phạm vi hỗ trợ Markdown:
     - Đoạn văn, in đậm **...**, in nghiêng *...*, mã nội dòng `...`
     - Bảng dạng ống (| a | b |) kèm dòng phân cách ---
     - Danh sách gạch đầu dòng và danh sách đánh số (một cấp và hai cấp)
-    - Khối mã ``` ... ``` ; riêng khối ```mermaid được đưa vào khung có chú thích
-      "Sơ đồ Mermaid — xem bản render trong file nguồn" để người đọc bản Word biết
-      cần chèn ảnh render vào đúng chỗ đó.
+    - Khối mã ``` ... ```
+    - Khối ```mermaid: nếu đã có ảnh render tương ứng trong diagrams/rendered/ thì
+      ảnh được nhúng thẳng vào file Word (đặt tên theo đúng quy ước của
+      scripts/render_mermaid_D.py: <slug-tên-file-nguồn>-NN.png). Nếu chưa render thì
+      giữ hành vi cũ: một khung có chú thích kèm mã nguồn sơ đồ để chèn ảnh thủ công.
+      Dùng --no-images để luôn chèn khung thay vì ảnh.
     - Đường kẻ ngang ---
     - Trích dẫn > ...
 """
@@ -42,9 +45,15 @@ try:
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.oxml import OxmlElement
     from docx.oxml.ns import qn
-    from docx.shared import Pt, RGBColor
+    from docx.shared import Inches, Pt, RGBColor
 except ImportError:  # pragma: no cover
     sys.exit("Thiếu thư viện python-docx. Cài bằng: pip install python-docx")
+
+ROOT = Path(__file__).resolve().parent.parent
+RENDERED_DIR = ROOT / "diagrams" / "rendered"
+# Khổ giấy mặc định của python-docx là Letter với lề 1 inch -> vùng chữ rộng 6,5 inch.
+# Để 6,2 inch cho sơ đồ để còn khoảng thở hai bên khi in.
+MAX_IMG_WIDTH = Inches(6.2)
 
 
 # --------------------------------------------------------------------------
@@ -128,20 +137,68 @@ def is_separator(line: str) -> bool:
     return all(re.fullmatch(r":?-{2,}:?", c) for c in split_row(stripped) if c)
 
 
+def slugify(text: str) -> str:
+    """Bản sao đúng nguyên logic của scripts/render_mermaid_D.py.
+
+    Hai script phải sinh ra cùng một chuỗi thì mới tra được ảnh render theo tên file,
+    nên nếu sửa hàm này thì phải sửa cả hai nơi.
+    """
+    text = text.lower()
+    vn = {
+        "àáạảãâầấậẩẫăằắặẳẵ": "a", "èéẹẻẽêềếệểễ": "e", "ìíịỉĩ": "i",
+        "òóọỏõôồốộổỗơờớợởỡ": "o", "ùúụủũưừứựửữ": "u", "ỳýỵỷỹ": "y", "đ": "d",
+    }
+    for chars, repl in vn.items():
+        for ch in chars:
+            text = text.replace(ch, repl)
+    text = re.sub(r"[^a-z0-9]+", "-", text)
+    return re.sub(r"-{2,}", "-", text).strip("-")[:60] or "diagram"
+
+
 # --------------------------------------------------------------------------
 # Bộ chuyển đổi
 # --------------------------------------------------------------------------
 
 class Converter:
-    def __init__(self, doc: Document) -> None:
+    def __init__(self, doc: Document, images_dir: Path | None = RENDERED_DIR) -> None:
         self.doc = doc
-        self.stats = {"heading": 0, "table": 0, "code": 0, "mermaid": 0, "para": 0, "list": 0}
+        self.images_dir = images_dir
+        self.slug = ""        # slug của file .md đang chuyển, để tra tên ảnh
+        self.mermaid_n = 0    # thứ tự sơ đồ trong file đó, đếm lại từ 1 mỗi file
+        self.stats = {"heading": 0, "table": 0, "code": 0, "mermaid": 0,
+                      "image": 0, "para": 0, "list": 0}
+
+    def begin_source(self, src: Path) -> None:
+        """Bắt đầu một file nguồn mới: đặt lại bộ đếm sơ đồ và slug tra ảnh."""
+        self.slug = slugify(src.stem)
+        self.mermaid_n = 0
+
+    # -- ảnh render ------------------------------------------------------
+    def find_rendered(self) -> Path | None:
+        """Ảnh do render_mermaid_D.py sinh ra: <slug>-NN.png, NN đếm từ 01."""
+        if not self.images_dir or not self.slug:
+            return None
+        png = self.images_dir / f"{self.slug}-{self.mermaid_n:02d}.png"
+        return png if png.is_file() else None
+
+    def add_image(self, png: Path) -> None:
+        self.stats["image"] += 1
+        para = self.doc.add_paragraph()
+        para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        para.add_run().add_picture(str(png), width=MAX_IMG_WIDTH)
 
     # -- khối mã ---------------------------------------------------------
     def add_code_block(self, lines: list[str], lang: str) -> None:
         is_mermaid = lang.lower() == "mermaid"
         if is_mermaid:
             self.stats["mermaid"] += 1
+            self.mermaid_n += 1
+            png = self.find_rendered()
+            if png is not None:
+                # Đã có ảnh render thì nhúng thẳng; mã nguồn sơ đồ vẫn nằm ở file .md
+                # nên không cần lặp lại trong bản Word.
+                self.add_image(png)
+                return
             note = self.doc.add_paragraph()
             note.paragraph_format.space_before = Pt(6)
             run = note.add_run(
@@ -292,7 +349,7 @@ class Converter:
             self.stats["para"] += 1
 
 
-def build(sources: list[Path], out: Path) -> dict:
+def build(sources: list[Path], out: Path, images_dir: Path | None = RENDERED_DIR) -> dict:
     doc = Document()
 
     style = doc.styles["Normal"]
@@ -300,10 +357,11 @@ def build(sources: list[Path], out: Path) -> dict:
     style.font.size = Pt(12)
     style.element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
 
-    conv = Converter(doc)
+    conv = Converter(doc, images_dir)
     for idx, src in enumerate(sources):
         if idx > 0:
             doc.add_page_break()
+        conv.begin_source(src)
         conv.convert(src.read_text(encoding="utf-8"))
 
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -315,6 +373,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Chuyển chương Markdown sang .docx")
     ap.add_argument("inputs", nargs="+", help="Các file .md theo đúng thứ tự ghép")
     ap.add_argument("-o", "--output", required=True, help="Đường dẫn file .docx đầu ra")
+    ap.add_argument("--no-images", action="store_true",
+                    help="Không nhúng ảnh render; luôn chèn khung placeholder kèm mã sơ đồ")
     args = ap.parse_args()
 
     sources = [Path(p) for p in args.inputs]
@@ -323,11 +383,12 @@ def main() -> int:
         sys.exit("Không tìm thấy file: " + ", ".join(missing))
 
     out = Path(args.output)
-    stats = build(sources, out)
+    stats = build(sources, out, None if args.no_images else RENDERED_DIR)
     size_kb = out.stat().st_size / 1024
     print(f"Đã tạo {out} ({size_kb:.0f} KB)")
-    print("  tiêu đề: {heading} | bảng: {table} | sơ đồ Mermaid: {mermaid} | "
-          "khối mã khác: {code} | đoạn văn: {para} | mục danh sách: {list}".format(**stats))
+    print("  tiêu đề: {heading} | bảng: {table} | sơ đồ Mermaid: {mermaid} "
+          "(nhúng ảnh: {image}) | khối mã khác: {code} | đoạn văn: {para} | "
+          "mục danh sách: {list}".format(**stats))
     return 0
 
 
