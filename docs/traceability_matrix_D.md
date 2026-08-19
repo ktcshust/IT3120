@@ -590,6 +590,7 @@ lượng. Cột "Cách đếm" tồn tại để người khác kiểm lại đ�
 | Diagram cấu trúc của C | **3** | `diagrams/C_*.md` | Domain model, class diagram, ERD; mỗi tệp một khối `mermaid` |
 | Diagram của D | **2 chính + 7 phụ trợ = 9** | `diagrams/D_*.md`, `docs/*_D.md`, `wireframes/README.md` | COMP-01 và DEP-01 là hai diagram chính; 7 sơ đồ phụ trợ đếm bằng số khối ```` ```mermaid ````: 1 trong tệp component *(phóng to cụm Offer)*, 1 trong `nfr_detail_D.md`, 1 trong `design_decisions_D.md`, 4 trong `wireframes/README.md` |
 | Tổng số diagram Mermaid toàn báo cáo | **19** | Ba dòng trên | 7 của B + 3 của C + 9 của D |
+| Prototype | **1 tệp** HTML tự chứa, 11 màn, **~138 KB** | `prototype/index.html` | `ls -l prototype/index.html` (141.390 byte) |
 | Tệp deliverable của D | **10** | Hợp đồng thiết kế mục 11 | D1…D10; tệp đang đọc là phụ lục tích hợp bổ sung, không nằm trong danh sách mười tệp gốc |
 
 **Ghi chú về cách dùng các con số này.** Ba con số dễ bị hỏi ngược nhất là *(a)* "17 hay 18 trạng

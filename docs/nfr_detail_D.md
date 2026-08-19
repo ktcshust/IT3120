@@ -229,6 +229,13 @@ optimistic locking, chặn trường hợp hai người cùng sửa một buổi
 đã có sẵn trên `interview_participants(interviewer_id)`, giữ cho truy vấn overlap trong vùng khoá đủ
 nhanh để thời gian giữ khoá không vượt 300 ms.
 
+Về ngữ nghĩa biên: quy tắc `newStart < existingEnd AND newEnd > existingStart` dùng **so sánh nghiêm
+ngặt ở cả hai vế**, nên nó phủ đủ bốn kiểu chồng lấn — chồng một phần đầu, chồng một phần cuối, lồng
+hoàn toàn và trùng khít — đồng thời **cố ý** loại trừ hai buổi nối đuôi nhau. Khi buổi trước kết thúc
+đúng lúc buổi sau bắt đầu thì `newStart = existingEnd` làm vế thứ nhất sai, nên 14:00–15:00 và
+15:00–16:00 **không** bị coi là xung đột: hai buổi chạm nhau tại đúng một điểm thời gian không chiếm
+cùng một khoảng nào của interviewer. Truy vấn kiểm chứng ở mục 3 dùng đúng cặp toán tử này.
+
 Cách tiếp cận này khớp đúng ghi chú của B ở `report/chapter_3_behavior.md` mục 3.5.4 ("race condition
 được xử lý bằng lock Redis trong service trước khi ghi DB") và ghi chú của C ở `sql/schema.sql` mục 1
 (BR-03 không biểu diễn được bằng `CHECK` constraint).

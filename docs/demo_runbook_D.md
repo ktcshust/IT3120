@@ -5,7 +5,7 @@
 > **Deliverable liên quan:** D7 `slides/defense_slides_v1.md`, D8 `prototype/index.html`,
 > D1 `report/chapter_5_design.md`, D2 `report/chapter_6_conclusion.md`
 > **Quy ước đánh số:** để không đụng dãy số của chính văn Chương 6, toàn bộ hình và bảng trong
-> phụ lục này được đánh số **từ 6.20 trở đi** (Hình 6.20–6.21, Bảng 6.20–6.31), theo đúng cách bộ
+> phụ lục này được đánh số **từ 6.20 trở đi** (Hình 6.20–6.21, Bảng 6.20–6.32), theo đúng cách bộ
 > wireframe đã dùng dãy 5.60–5.85.
 
 ---
@@ -95,6 +95,52 @@ người demo về sớm ở bước nào thì phần dư dồn cho bước 3 v�
 3. **Lớp phủ chú thích là công cụ hai lưỡi.** Khi bật, mỗi bước hiện một đoạn giải thích ở góc dưới —
    rất tốt cho video dự phòng, nhưng lúc trình bày trực tiếp thì hội đồng sẽ đọc chữ thay vì nghe.
    Tắt bằng nút **"Tắt lớp phủ chú thích"** trước khi vào phòng.
+
+### 2.4. Ba khác biệt giữa dữ liệu prototype và dữ liệu wireframe
+
+Bộ dữ liệu mẫu của `prototype/index.html` không trùng khít bộ dữ liệu trong bảng kịch bản dữ liệu của
+`wireframes/D_wireframes_v1.md`. Ba khác biệt dưới đây là **cố ý**, và người demo cần nắm để trả lời
+khi hội đồng đối chiếu hai tài liệu cạnh nhau.
+
+1. **Vị trí thẻ trên kanban.** Wireframe chụp lát cắt 17/08/2026 15:48, tại đó Hoàng Thị Mai Chi đã ở
+   vòng phỏng vấn thứ hai. Prototype đặt hồ sơ này ở cột *Đang sàng lọc* để kịch bản demo bắt đầu
+   được từ thao tác shortlist và đi hết một dòng đời hồ sơ trong sáu bước. Đây là khác biệt về thời
+   điểm chụp, không phải khác biệt về dữ liệu.
+2. **Lát cắt của `OFF-318`.** Wireframe mô tả offer này ở lần duyệt thứ hai, mức vượt band 15,0%.
+   Prototype dựng ở lát cắt `attempt_no = 1`, mức 51.840.000 VND, vượt band 8,0%, chuỗi hai cấp và
+   cấp 1 đã duyệt. Nhờ vậy thao tác "Yêu cầu chỉnh sửa" làm `attempt_no` tăng từ 1 lên 2 ngay trước
+   mắt hội đồng; nếu dựng đúng lát cắt của wireframe thì con số hiện trên màn hình sẽ là 3.
+3. **Offer `OFF-315` chỉ có trong prototype.** Offer của Phan Anh Tuấn (JD-03) không xuất hiện trong
+   bảng kịch bản dữ liệu của wireframe; nó được dựng thêm để minh hoạ nhánh chuỗi duyệt ba cấp của
+   BR-08 và đang chờ cấp 3, nên chỉ thao tác được khi đổi sang vai trò Người duyệt Tài chính.
+
+Ngoài ba khác biệt trên, các mã định danh dùng trong kịch bản đã được đồng bộ: hồ sơ dùng dải
+`APP-1042`, `APP-1045`, `APP-1049`; buổi phỏng vấn dùng `INT-2061` và `INT-2087`; offer dùng `OFF-317`
+và `OFF-318`; ngày xảy ra xung đột lịch là 20/08/2026. Toàn bộ số liệu là dữ liệu giả định, không dùng
+để kết luận bất cứ điều gì về hiệu quả nghiệp vụ.
+
+### 2.5. Tám tiêu chí nghiệm thu buổi demo
+
+Sáu tiêu chí đầu do A đề ra, giữ nguyên nội dung và bổ sung cột cách kiểm để mỗi tiêu chí trở thành
+một phép thử có kết quả đúng hoặc sai; hai tiêu chí cuối do D thêm, gắn với NFR-14 và ADR-12. Chương 6
+chỉ tóm tắt các tiêu chí này thành văn xuôi; bảng đầy đủ nằm ở đây.
+
+**Bảng 6.32 — Tiêu chí nghiệm thu buổi demo**
+
+| # | Tiêu chí | Cách kiểm trên prototype | Nguồn |
+|---|---|---|---|
+| 1 | Mỗi use case chính đi qua luồng cơ bản và ít nhất một luồng thay thế | Bước 2–6 của Bảng 6.20; nhánh A5.1 và A5.2 tại bước 3, nhánh A4.1 tại bước 5 | A |
+| 2 | Mọi chuyển trạng thái xuất hiện đúng trong state machine và có dòng audit | Đối chiếu lớp chú thích ở bước 2 và bước 5 với `diagrams/B_state_application_v1.md` | A |
+| 3 | BR-03, BR-05, BR-08, BR-14 và BR-24 được chứng minh bằng dữ liệu demo | BR-03 tại bước 3; BR-05 ở hạn xác nhận trên `SCR-09`; BR-08 tại bước 5; BR-14 ở mốc khoá 24 giờ tại bước 4; BR-24 ở định nghĩa metric tại bước 6 | A |
+| 4 | Vai trò không có quyền bị từ chối | Bước 1 chứng minh lớp ẩn giao diện; lớp chặn tại API và service theo ADR-10 chỉ kiểm được bằng negative test khi có backend, nên tiêu chí này **đạt một phần** | A, D |
+| 5 | Lỗi email hoặc calendar không làm mất dữ liệu nghiệp vụ và có cơ chế thử lại | Đối chiếu luồng outbox trong COMP-01 và trạng thái `CALENDAR_SYNC_PENDING`; prototype không mô phỏng lỗi gateway | A |
+| 6 | Báo cáo hiển thị định nghĩa metric và độ tươi dữ liệu | Bước 6, dòng `dataFreshness` và chú giải từng biểu đồ trên `SCR-10` | A |
+| 7 | Toàn bộ sáu bước thao tác được bằng bàn phím, không dùng chuột | Dùng Tab và Enter đi hết Bảng 6.20; kiểm vòng focus trên modal `SCR-05` | D, NFR-14 |
+| 8 | Demo không phát sinh yêu cầu mạng nào | Mở tab Network của trình duyệt trước khi demo, số request tới miền ngoài phải bằng 0 | D, ADR-12 |
+
+Tiêu chí 4 và tiêu chí 5 là hai tiêu chí prototype không thể đạt trọn vẹn vì không có backend. Khi bảo
+vệ, hai tiêu chí này được trả lời bằng thiết kế và bằng cách đo dự kiến, không được trình bày như đã
+kiểm chứng.
 
 ---
 

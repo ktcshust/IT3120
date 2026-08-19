@@ -75,7 +75,12 @@ sáu mục.
 
 **Bối cảnh.** Giả định quy mô ở `spec_ats (1).md` mục 15 giới hạn hệ thống ở mức tối đa 50 JD mở đồng
 thời, tối đa 200 ứng viên cho mỗi JD và khoảng 60 người dùng nội bộ, tất cả trong một doanh nghiệp, một
-múi giờ. Mục 12.2 của đặc tả để ngỏ giữa "modular monolith" và "microservices nhẹ". Nhóm phát triển giả
+múi giờ. Con số **khoảng 60 người dùng nội bộ** không có trong đặc tả mà là **giả định của D**, suy ra
+từ bối cảnh "công ty IT quy mô ~500–1000 nhân sự" ở mục 1.1 của đặc tả và từ sáu vai trò nội bộ trong
+`user_role` của `sql/schema.sql`: ước chừng 8 Recruiter, 20 Hiring Manager, 25 Interviewer kiêm nhiệm,
+3 HR Admin, 2 Head of HR và 2 người duyệt tài chính. Mọi phép tính năng lực ở
+`diagrams/D_deploy_topology_v1.md` mục 10 đều dẫn xuất từ con số này, nên nếu quy mô nhân sự thực tế
+khác thì phải tính lại từ đây. Mục 12.2 của đặc tả để ngỏ giữa "modular monolith" và "microservices nhẹ". Nhóm phát triển giả
 định là một đội nhỏ, không có đội vận hành riêng. Ba loại tải trong hệ thống có đặc tính rất khác nhau:
 tải tương tác của Recruiter, tải nền theo lịch của các job SLA, và tải phân tích của màn báo cáo.
 
@@ -878,6 +883,7 @@ chốt; theo `06_conventions_shared.md` mục 4, mục nào chưa có người x
 | 10 | C | Chín đề xuất schema ở Bảng 5.52, đặc biệt hai mục P0 | Mục 4 | ADR-08 và cột kanban của `SCR-03` mất cơ sở dữ liệu |
 | 11 | C | Sáu index đề xuất ở Bảng 5.53 | Mục 4 | Không có cơ sở để khẳng định đạt ngưỡng NFR-01 và NFR-02 |
 | 12 | B | Tên component trên COMP-01 khớp lifeline của SEQ-01, SEQ-02, SEQ-03 | Mục 2.6 hợp đồng thiết kế | Vi phạm checklist review chéo Chương 5 |
+| 12b | C | Chủ sở hữu quyền ghi của `application_status_history` và của hai cột theo dõi duyệt trên `offers`; chủ sở hữu ghi của `departments`, `users`, `email_templates`, `outbox_events`, `candidate_portal_tokens` | `diagrams/D_comp_architecture_v1.md` mục 5.2 | Nguyên tắc "một bảng một chủ sở hữu ghi" còn hai ngoại lệ và năm bảng chưa gán chủ |
 | 13 | Cả nhóm | Giữ quyết định dùng Mermaid cho diagram của D (ADR-11) | `docs/change_log.md` ngày 2026-08-06 | Phải vẽ lại COMP-01 và DEP-01 bằng công cụ khác |
 | 14 | Cả nhóm | Ghi kết quả Sync S4 vào `docs/change_log.md` theo các dòng soạn sẵn ở mục 8 | `00_README.md` mục 9 | Không mục nào được tính Done |
 
@@ -905,3 +911,32 @@ nhận.
 
 2026-08-16 | D | Chốt bảng ánh xạ tên ba tầng (báo cáo tiếng Việt — tên trên diagram — giá trị enum trong DB) cho 6 vai trò nội bộ, Candidate và 9 trạng thái offer, giải quyết X-03 và X-06 ở tầng nhãn hiển thị mà không cần sửa enum của C. | Ảnh hưởng: A (glossary Chương 2), D (Chương 5, wireframe, prototype) [cần A xác nhận tên chuẩn cho vai trò duyệt tài chính]
 ```
+
+---
+
+## 9. Rủi ro thiết kế và biện pháp
+
+Mục này giữ bảng rủi ro thiết kế đầy đủ, chuyển về đây từ Chương 6 để chính văn báo cáo giữ đúng độ
+dài quy định; Chương 6 mục 6.3 dẫn chiếu tới đây. Sáu rủi ro đầu kế thừa bảng rủi ro thiết kế trong bản phác Chương 6 của A, được bổ sung cột
+xác suất và cột phương án dự phòng khi biện pháp thiết kế vẫn không chặn được; ba rủi ro cuối thuộc
+phần kiến trúc và triển khai, chỉ nhìn thấy được từ Chương 5. Cột xác suất là đánh giá định tính của
+nhóm, chưa có dữ liệu vận hành chống lưng.
+
+**Bảng 5.58 — Rủi ro thiết kế, biện pháp và phương án dự phòng**
+
+| # | Rủi ro | Ảnh hưởng | Xác suất | Biện pháp thiết kế | Phương án dự phòng khi vẫn xảy ra |
+|---|---|---|---|---|---|
+| 1 | Hai Recruiter đặt cùng một khung giờ cho cùng một interviewer | Buổi phỏng vấn trùng, mất uy tín với ứng viên | Cao | Khoá phân tán qua Redis, kiểm tra overlap và ghi nằm trong cùng vùng khoá (ADR-03, C08, C24) | Cho phép ép đặt lịch kèm lý do bắt buộc và audit (BR-26); báo cáo lịch trùng hằng ngày để HR Admin xử lý tay |
+| 2 | Email gateway hoặc calendar provider lỗi | Ứng viên không nhận thư mời hoặc offer đúng hạn | Trung bình | Outbox kèm idempotency key, thử lại tối đa 5 lần có backoff (ADR-06, NFR-11) | Lịch nội bộ vẫn hợp lệ ở trạng thái `CALENDAR_SYNC_PENDING`; Recruiter gọi điện theo danh sách outbox tồn đọng |
+| 3 | Recruiter rời công ty | JD mất chủ sở hữu, vi phạm BR-01 | Trung bình | Chặn vô hiệu hoá tài khoản khi còn JD đang mở, bắt buộc chuyển giao trên SCR-11 | HR Admin gán tạm quyền phụ trách cho Head of HR và ghi audit, đặt hạn chuyển giao chính thức |
+| 4 | Ứng viên yêu cầu xoá dữ liệu cá nhân | Xung đột giữa quyền riêng tư và nhu cầu audit, báo cáo | Thấp | Ẩn danh hoá dữ liệu định danh, giữ khoá thay thế và số liệu tổng hợp thay vì xoá cứng | Xoá tệp CV trên object storage nhưng giữ checksum và dòng audit; mở phiếu xử lý thủ công có phê duyệt |
+| 5 | Template email hoặc scorecard đổi giữa chừng | Dữ liệu lịch sử bị diễn giải sai | Trung bình | Chụp ảnh phiên bản tại thời điểm dùng: `scorecard_template_version` và `email_templates.version` (đề xuất P1, P2 gửi C ở mục 4) | Nếu C chưa bổ sung cột: khoá việc sửa template khi còn buổi phỏng vấn chưa nộp feedback |
+| 6 | Read model làm mới trễ | KPI hiển thị chậm hơn thực tế, người dùng mất tin tưởng | Cao | Làm mới theo lịch 15 phút và luôn hiển thị `dataFreshness` (ADR-07, NFR-10) | Nút làm mới ngay chạy trên replica, giới hạn tần suất để không đẩy tải sang primary |
+| 7 | Redis là điểm chết đơn lẻ của cơ chế khoá lịch | Toàn hệ thống không xếp được lịch mới; nếu bỏ qua khoá thì BR-03 bị hở | Trung bình | Node N09 bật Sentinel khi cần khả dụng cao; `LockManager` dùng TTL 120 giây và chọn hướng fail-closed thay vì cho qua | Chuyển tạm sang advisory lock của PostgreSQL trên cùng khoá `(interviewer_id, slot)` — chậm hơn nhưng vẫn đúng; trong lúc đó chặn thao tác xếp lịch |
+| 8 | Read model lệch so với dữ liệu nguồn | Số trên SCR-10 khác số đếm trực tiếp, báo cáo mất giá trị ra quyết định | Trung bình | Bốn bảng `rm_*` chỉ dựng từ `application_status_history` là nguồn chỉ ghi thêm; job làm mới idempotent | Job đối soát hằng đêm so tổng read model với truy vấn nguồn; lệch quá 0,5% thì dựng lại toàn bộ `rm_*` và cảnh báo |
+| 9 | Hai bản `ats-worker` cùng chạy | Gửi thư lặp, escalate sai người, offer hết hạn hai lần | Thấp | Chỉ một instance active nhờ leader election bằng khoá Redis (N05); mọi job idempotent, `idempotency_key` là UNIQUE trên `outbox_events` (NFR-11) | Khoá kênh gửi ra ngoài, phát lại từ outbox theo idempotency key; giám sát cảnh báo khi outbox tồn quá 100 bản ghi (NFR-13) |
+
+Chín rủi ro trên chia thành hai nhóm khi trả lời câu hỏi bảo vệ. Rủi ro 1, 2, 5 và 6 đã có biện pháp
+nằm sẵn trong thiết kế và có thể chỉ thẳng vào component hoặc ADR tương ứng. Rủi ro 3, 4, 7, 8 và 9
+chỉ được xử lý ở mức quy trình vận hành hoặc phương án dự phòng, nên khi bị hỏi cần trả lời đúng mức
+đó thay vì khẳng định hệ thống đã chặn được.
